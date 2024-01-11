@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-in_path = "test/img/pen.JPG"
-out_path = "test/output/"
+in_path = "test/img/leaf.JPG"
+out_path = "test/output/conts"
 img = cv2.imread(in_path)
 height, width = img.shape[:2]
 min_area = height * width / 100
