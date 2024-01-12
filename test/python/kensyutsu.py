@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-in_path = "test/img/1.png"
-out_path = "test/output/area/1/"
+in_path = "test/img/2.png"
+out_path = "test/output/area/2/"
 image = cv2.imread(in_path)
 img_scaled = None
 min_area = None
@@ -25,7 +25,7 @@ def main():
     imgs_bin = bin(imgs_canny, "s")
     imgv_bin = bin(imgv_canny, "v")
     #img_bin = cv2.cvtColor(imgs_bin, cv2.COLOR_GRAY2BGR)
-    img_or = cv2.bitwise_or(imgv, imgv_bin)
+    img_or = cv2.bitwise_or(imgs, imgs_bin)
     save("or.png", img_or)
     #img_gray = gray(img_or)
     img_binbin = bin(img_or, "2")
