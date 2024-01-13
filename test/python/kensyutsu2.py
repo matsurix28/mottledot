@@ -17,6 +17,8 @@ class Kensyutsu:
         self.bin_thr = 100
         self.bin_max = 255
         self.min_area = 100
+        self.hsv_min = np.array([30,50,50])
+        self.hsv_max = np.array([90,255,200])
 
     def set_param(self,
                   size=1000,
@@ -24,7 +26,9 @@ class Kensyutsu:
                   canny_thr2=200,
                   bin_thr=100,
                   bin_max=255,
-                  min_area=100
+                  min_area=100,
+                  hsv_min=[30,50,50],
+                  hsv_max=[90,255,200]
                   )-> None:
         self.size = size
         self.canny_thr1 = canny_thr1
@@ -32,6 +36,8 @@ class Kensyutsu:
         self.bin_thr = bin_thr
         self.bin_max = bin_max
         self.min_area = min_area
+        self.hsv_min = np.array(hsv_min)
+        self.hsv_max = np.array(hsv_max)
 
     def detect(self,
                input_path: str, 
@@ -139,8 +145,9 @@ class Kensyutsu:
             self.save(img, name + tag)
         return cnts_list
     
-    def check_cnts(self, img: np.ndarray, cnts_list: list):
-        
+    def get_green(self, img: np.ndarray):
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_hsv = cv2.inRange()
 
 if __name__ == '__main__':
     main()
