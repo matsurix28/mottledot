@@ -161,7 +161,7 @@ class Kensyutsu:
         print('px sum: ', px_sum)
         print('px white: ', px_white)
         print('green ratio: ', green_ratio)
-        return mask_hsv, green_ratio
+        return mask_hsv, px_white
     
     def check_green_area(self, img: np.ndarray, cnts_list: list) -> list:
         height, width = img.shape[:2]
@@ -172,10 +172,16 @@ class Kensyutsu:
             img_base = img.copy()
             black = np.zeros((height, width, 3), np.uint8)
             area = cv2.bitwise_or(img_base, black, mask=mask)
-            mask_hsv, green_ratio = self.get_green(area)
+            print('area: ', area.shape)
+            self.save(area, str(i) + 'area')
+            mask_hsv, green_area = self.get_green(area)
+            cnts_area = cv2.contourArea(cnts)
             self.save(mask_hsv, str(i) + 'green')
-            print(i, green_ratio)
-            if green_ratio >= 0.6:
+            print(i, cnts_area)
+            print(i, green_area)
+            green_ratio = green_area / cnts_area
+            print(str(i) + ': ratio = ', green_ratio)
+            if green_ratio >= 0.8:
                 areas_list.append(cnts)
         return areas_list
     
