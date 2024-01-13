@@ -4,11 +4,12 @@ import os
 from functools import singledispatch
 
 def main():
-    pass
+    ken = Kensyutsu()
+    ken.detect('./test/img/leaf.JPG', './test/output/ken')
 
 class Kensyutsu:
-    def __init__(self, input_path: str, output_path=None) -> None:
-        self.set_default
+    def __init__(self) -> None:
+        self.set_default()
 
     def set_default(self) -> None:
         self.size = 1000
@@ -57,12 +58,14 @@ class Kensyutsu:
         # Get size
         if resize:
             img = self.resize(img)
-        self.height, self.width = img.shape[:2]
+        height, width = img.shape[:2]
         
 
         # Detection
-        hsv_list = self.best_hsv(img)
-
+        best_hsv_list = self.best_hsv(img)
+        cnts_list = self.get_cnts(best_hsv_list[0][1])
+        self.save(best_hsv_list[0][1], 'best.png')
+        self.extract_leaf(img, cnts_list)
 
     def save(self, img: np.ndarray, name: str, ext=".png") -> None:
         output = self.output_path + self.img_name + "_" + name + ext
@@ -118,36 +121,78 @@ class Kensyutsu:
     def best_hsv(self, img: np.ndarray) -> list[float, np.ndarray, str]:
         img_h, img_s, img_v = self.split_hsv(img)
         hsv_list = [[img_h, "h"], [img_s, "s"], [img_v, "v"]]
-        px_list = []
+        best_hsv_list = []
         for image in hsv_list:
             img_canny = self.canny(image[0], name=image[1])
             img_bin = self.bin(img_canny, image[1])
-            img_or = cv2.bitwise_or(img, img_bin)
+            img_or = cv2.bitwise_or(image[0], img_bin)
             img_masked = self.bin(img_or, image[1] + "-maseked")
             pixel_num = np.size(img)
             pixel_sum = np.sum(img_masked)
             white_px = pixel_sum / 255
             w_ratio = white_px / pixel_num
-            px_list.append([w_ratio, img_masked, image[1]])
-        px_list.sort(reverse=True, key=lambda x: x[0])
-        return px_list
+            best_hsv_list.append([w_ratio, img_masked, image[1]])
+        best_hsv_list.sort(key=lambda x: x[0])
+        return best_hsv_list
     
-    def contours(self, bin: np.ndarray, img: np.ndarray, name: str = None, ext=".png"):
+    def get_cnts(self, bin: np.ndarray):
         cnts, _ = cv2.findContours(bin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        min_area = self.height * self.width / self.min_area
+        height, width = bin.shape[:2]
+        min_area = height * width / self.min_area
         cnts_list = list(filter(lambda x: cv2.contourArea(x) > min_area, cnts))
-        cv2.drawContours(img, cnts_list, -1, (0,0,255), 5)
-        if "contours" in self.save_files:
-            if name is not None:
-                tag = "-cnt"
-            else:
-                tag = "cnt"
-            self.save(img, name + tag)
+        #cv2.drawContours(img, cnts_list, -1, (0,0,255), 5)
+        #if "contours" in self.save_files:
+        #    if name is not None:
+        #        tag = "-cnt"
+        #    else:
+        #        tag = "cnt"
+        #    self.save(img, name + tag)
         return cnts_list
     
-    def get_green(self, img: np.ndarray):
+    def get_green(self, img: np.ndarray) -> tuple[np.ndarray, int]:
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        mask_hsv = cv2.inRange()
+        mask_hsv = cv2.inRange(img_hsv, self.hsv_min, self.hsv_max)
+        print(img_hsv.shape)
+        px_num = np.size(mask_hsv)
+        px_sum = np.sum(mask_hsv)
+        px_white = int(px_sum / 255)
+        green_ratio = px_white / px_num
+        print('px num: ', px_num)
+        print('px sum: ', px_sum)
+        print('px white: ', px_white)
+        print('green ratio: ', green_ratio)
+        return mask_hsv, green_ratio
+    
+    def check_green_area(self, img: np.ndarray, cnts_list: list) -> list:
+        height, width = img.shape[:2]
+        areas_list = []
+        for i, cnts in enumerate(cnts_list):
+            blank = np.zeros((height, width), np.uint8)
+            mask = cv2.drawContours(blank, [cnts], 0, 255, -1)
+            img_base = img.copy()
+            black = np.zeros((height, width, 3), np.uint8)
+            area = cv2.bitwise_or(img_base, black, mask=mask)
+            mask_hsv, green_ratio = self.get_green(area)
+            self.save(mask_hsv, str(i) + 'green')
+            print(i, green_ratio)
+            if green_ratio >= 0.6:
+                areas_list.append(cnts)
+        return areas_list
+    
+    def extract_leaf(self, img: np.ndarray, cnts_list: list, name=None, ext='.png'):
+        areas_list = self.check_green_area(img, cnts_list)
+        height, width = img.shape[:2]
+        mask = np.zeros((height, width), np.uint8)
+        for cnts in areas_list:
+            cv2.drawContours(mask, [cnts], 0, 255, -1)
+        black = np.zeros((height, width, 3), np.uint8)
+        img_leaf = cv2.bitwise_or(img, black, mask=mask)
+        if name is None:
+            tag = 'leaf'
+        else:
+            tag = '-leaf'
+        self.save(img_leaf, str(name) + tag, ext)
+        return img_leaf
 
 if __name__ == '__main__':
     main()

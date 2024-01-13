@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-in_path = "test/img/ha.JPG"
+in_path = "test/img/naname.JPG"
 out_path = "test/output/green/"
 image = cv2.imread(in_path)
 scale = 1000 / image.shape[1]
@@ -32,6 +32,7 @@ def main():
     print("white", white)
     result = cv2.bitwise_or(mama, img, mask=mask_hsv)
     save("green.png", result)
+    print("maskhsv type", type(mask_hsv))
 
 
 def save(name, img):
