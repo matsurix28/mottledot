@@ -5,7 +5,8 @@ from functools import singledispatch
 
 def main():
     ken = Kensyutsu()
-    ken.detect('./test/img/leaf.JPG', './test/output/ken')
+    ken.set_param(bin_thr=80)
+    ken.detect('./test/img/naname.JPG', './test/output/ken', save_files=["canny", "bin"])
 
 class Kensyutsu:
     def __init__(self) -> None:
@@ -99,7 +100,7 @@ class Kensyutsu:
 
     def canny(self, img: np.ndarray, name: str = None, ext=".png"
               ) -> np.ndarray:
-        img_canny = cv2.Canny(img, self.canny_thr1, self.canny_thr2)
+        img_canny = cv2.Canny(img, self.canny_thr1, self.canny_thr2, )
         if "canny" in self.save_files:
             if name is not None:
                 tag = "-canny"
@@ -121,16 +122,19 @@ class Kensyutsu:
     def best_hsv(self, img: np.ndarray) -> list[float, np.ndarray, str]:
         img_h, img_s, img_v = self.split_hsv(img)
         hsv_list = [[img_h, "h"], [img_s, "s"], [img_v, "v"]]
+        self.save(img_v, "v")
         best_hsv_list = []
         for image in hsv_list:
             img_canny = self.canny(image[0], name=image[1])
             img_bin = self.bin(img_canny, image[1])
             img_or = cv2.bitwise_or(image[0], img_bin)
+            self.save(img_or, "or" + image[1])
             img_masked = self.bin(img_or, image[1] + "-maseked")
             pixel_num = np.size(img)
             pixel_sum = np.sum(img_masked)
             white_px = pixel_sum / 255
             w_ratio = white_px / pixel_num
+            
             best_hsv_list.append([w_ratio, img_masked, image[1]])
         best_hsv_list.sort(key=lambda x: x[0])
         return best_hsv_list
