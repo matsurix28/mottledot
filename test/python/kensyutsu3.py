@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 def main():
-    
+    pass
 
 class Kensyutsu:
     """Extract green leaves from an image.
@@ -32,11 +32,11 @@ class Kensyutsu:
             Defaults to (5,5)
     """
     def __init__(self):
-        self.set_default()
+        self.__set_default()
 
-    def set_default(self) -> None:
+    def __set_default(self) -> None:
         """Set default value to each parameter."""
-        self.resize = 1000
+        self.__resize = 1000
         self.canny_thr1 = 100
         self.canny_thr2 = 200
         self.bin_thr = 60
@@ -82,7 +82,7 @@ class Kensyutsu:
         Returns:
             None
         """
-        self.resize = resize
+        self.__resize = resize
         self.canny_thr1 = canny_thr1
         self.canny_thr2 = canny_thr2
         self.bin_thr = bin_thr
@@ -92,7 +92,7 @@ class Kensyutsu:
         self.hsv_max = np.array(hsv_max)
         self.blur = blur
 
-    def save(self, img: np.ndarray, name: str, ext='.png') -> None:
+    def __save(self, img: np.ndarray, name: str, ext='.png') -> None:
         """Save as image file.
         
         Args:
@@ -107,7 +107,7 @@ class Kensyutsu:
         output = self.output_path + self.img_name + '_' + name + ext
         cv2.imwrite(output, img)
 
-    def resize(self, 
+    def __resize(self, 
                img: np.ndarray, name: str = '', 
                ext='.png', export: bool = False
                ) -> np.ndarray:
@@ -127,17 +127,17 @@ class Kensyutsu:
         Returns:
             numpy.ndarray: Resized image.
         """
-        scale = self.resize / img.shape[1]
+        scale = self.__resize / img.shape[1]
         img_resized = cv2.resize(img, None, fx=scale, fy=scale)
         if export:
             if name == '':
                 tag = '-'
             else:
                 tag = ''
-            self.save(img_resized, name + tag + 'resized', ext)
+            self.__save(img_resized, name + tag + 'resized', ext)
         return img_resized
     
-    def split_hsv(self, 
+    def __split_hsv(self, 
                   img: np.ndarray, name: str = '', 
                   ext='.png', export: bool = False
                   ) -> tuple[np.ndarray, ...]:
@@ -166,12 +166,12 @@ class Kensyutsu:
                 tag = ''
             else:
                 tag = '-'
-            self.save(img_h, name + tag + 'H', ext)
-            self.save(img_s, name + tag + 'S', ext)
-            self.save(img_v, name + tag + 'V', ext)
+            self.__save(img_h, name + tag + 'H', ext)
+            self.__save(img_s, name + tag + 'S', ext)
+            self.__save(img_v, name + tag + 'V', ext)
         return img_h, img_s, img_v
     
-    def canny(self, 
+    def __canny(self, 
               img: np.ndarray, name: str = '',
               ext='.png', export: bool = False
               ) -> np.ndarray:
@@ -197,10 +197,10 @@ class Kensyutsu:
                 tag = 'canny'
             else:
                 tag = '-canny'
-            self.save(img_canny, name + tag, ext)
+            self.__save(img_canny, name + tag, ext)
         return img_canny
     
-    def bin(self, 
+    def __bin(self, 
             img: np.ndarray, name: str = '',
             ext='.png', export: bool = False
             ) -> np.ndarray:
@@ -227,10 +227,10 @@ class Kensyutsu:
                 tag = 'bin'
             else:
                 tag = '-bin'
-            self.save(img_bin, name + tag, ext)
+            self.__save(img_bin, name + tag, ext)
         return img_bin
     
-    def get_cnts(self, img: np.ndarray) -> list:
+    def __get_cnts(self, img: np.ndarray) -> list:
         """Find contours with an area larger than the set value.
         
         Args:
@@ -246,7 +246,7 @@ class Kensyutsu:
         cnts_list = list(filter(lambda x: cv2.contourArea(x) > min_area, cnts))
         return cnts_list
     
-    def assess_noise(self, img: np.ndarray) -> int:
+    def __assess_noise(self, img: np.ndarray) -> int:
         """Assess noise of image.
         
         Args:
@@ -262,27 +262,69 @@ class Kensyutsu:
         cnts_list = list(filter(lambda x: cv2.contourArea(x) < min_area, cnts))
         return len(cnts_list)
     
-    def get_green_area(self, img: np.ndarray) -> tuple[np.ndarray, int]:
+    def __assess_area(self, img: np.ndarray, cnts: tuple) -> bool:
+        """Whether the area of the region is larger than the standard value.
+        
+        Args:
+            img (:obj:`numpy.ndarray`): Input image.
+            cnts (:obj:`numpy.ndarray`): List of contours.
+
+        Returns:
+            bool: Returns True if list contains an area larger than 
+                the standared value.
+        """
+        height, width = img.shape[:2]
+        min_area = height * width / self.min_area
+        larger_cnts = list(filter(lambda x: cv2.contourArea(x) > min_area, cnts))
+        return len(larger_cnts) > 0
+    
+    def __get_green_area(self, img: np.ndarray) -> int:
         """Get the area of green area
         
         Args:
             img (:obj:`numpy.ndarray`): Input color image.
 
         Returns:
-            numpy.ndarray: Mask other than green area.
             int: Number of pixels in green area.
         """
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask_hsv = cv2.inRange(img_hsv, self.hsv_min, self.hsv_max)
         px_sum = np.sum(mask_hsv)
         px_white = int(px_sum / 255)
-        return mask_hsv, px_white
+        return px_white
     
-    def get_green_ratio(self, img: np.ndarray, cnts_list: list) -> list:
+    def __get_green_ratio(self, img: np.ndarray, cnts: np.ndarray
+                        ) -> tuple[np.ndarray, np.ndarray]:
+        """Calcurate the percentage of green area in the region.
+        
+        Args:
+            img (:obj:`numpy.ndarray`): Input color image.
+            cnts (:obj:`numpy.ndarray`): Area contour.
+
+        Returns:
+            numpy.ndarray: Masked image.
+            numpy.ndarray: Percentage of green area in the region.
+        """
         height, width = img.shape[:2]
-        areas_list = []
-        for i, cnts in enumerate(cnts_list):
-            blank = np.zeros
+        mask = np.zeros((height, width, 3), np.uint8)
+        cv2.drawContours(mask, [cnts], -1, (255,255,255), -1)
+        region = cv2.bitwise_and(img, mask)
+        green_area = self.__get_green_area(region)
+        region_area = cv2.contourArea(cnts)
+        green_ratio = green_area / region_area * 100
+        return region, green_ratio
+    
+    def __best_hsv(self, img: np.ndarray) -> list:
+        img_h, img_s, img_v = self.__split_hsv(img)
+    
+    def extr_green_leaves(self):
+        pass
+
+    def extr_fvfm(self):
+        pass
+
+    def extr_others(self):
+        pass
 
 if __name__ == '__main__':
     main()
