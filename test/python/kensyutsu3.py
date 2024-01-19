@@ -230,7 +230,7 @@ class Kensyutsu:
             self.__save(img_bin, name + tag, ext)
         return img_bin
     
-    def __get_cnts(self, img: np.ndarray) -> list:
+    def __get_leaves_cnts(self, img: np.ndarray) -> list:
         """Find contours with an area larger than the set value.
         
         Args:
@@ -246,19 +246,17 @@ class Kensyutsu:
         cnts_list = list(filter(lambda x: cv2.contourArea(x) > min_area, cnts))
         return cnts_list
     
-    def __assess_noise(self, img: np.ndarray) -> int:
+    def __assess_noise(self, img: np.ndarray, cnts: tuple) -> int:
         """Assess noise of image.
         
         Args:
-            img (:obj:`numpy.ndarray`): Input binary image.
+            img (:obj:`numpy.ndarray`): Input image to get height and width.
 
         Returns:
             int: Number of noise.
         """
-        img_canny = cv2.Canny(img, self.canny_thr1, self.canny_thr2)
-        cnts, _ = cv2.findContours(img_canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         height, width = img.shape[:2]
-        min_area = height * width / 1000
+        min_area = height * width / self.min_area
         cnts_list = list(filter(lambda x: cv2.contourArea(x) < min_area, cnts))
         return len(cnts_list)
     
@@ -266,7 +264,7 @@ class Kensyutsu:
         """Whether the area of the region is larger than the standard value.
         
         Args:
-            img (:obj:`numpy.ndarray`): Input image.
+            img (:obj:`numpy.ndarray`): Input image to get height and width.
             cnts (:obj:`numpy.ndarray`): List of contours.
 
         Returns:
@@ -315,10 +313,27 @@ class Kensyutsu:
         return region, green_ratio
     
     def __best_hsv(self, img: np.ndarray) -> list:
-        img_h, img_s, img_v = self.__split_hsv(img)
+        img = cv2.blur(img, self.blur)
+        hsv = self.__split_hsv(img)
+        best_list = []
+        for color in hsv:
+            image = color[0]
+            img_bin = self.__bin(image)
+            img_canny = self.__canny(img_bin)
+            cnts, _ = cv2.findContours(img_canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            noise = self.__assess_noise(image, cnts)
+            has_area = self.__assess_area(image, cnts)
+            if has_area:
+                best_list.append([image, noise])
+        best_list.sort(key=lambda x: x[1])
+        return best_list[0][0]
     
-    def extr_green_leaves(self):
-        pass
+    def __extr_green_leaves(self, path: str):
+        img = cv2.imread(path)
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask_hsv = cv2.inRange(img_hsv, self.hsv_min, self.hsv_max)
+        cnts = self.__get_leaves_cnts(mask_hsv)
+        return
 
     def extr_fvfm(self):
         pass
