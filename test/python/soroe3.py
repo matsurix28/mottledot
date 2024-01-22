@@ -11,15 +11,19 @@ def test():
     bin = sbin(img_fvfm)
     cnts, fimg = get_area(bin)
     angle, center, _ = elip(cnts)
-    rotated = rotate(bin, angle, center)
+    rotated = rotate(fimg, angle, center)
     rotated_cf = rotate(img_fvfm, angle, center)
+    mask_cf = cv2.cvtColor(rotated, cv2.COLOR_GRAY2BGR)
+    rotated_cf = cv2.bitwise_and(rotated_cf, mask_cf)
     ftate = max_tate(rotated)
 
     lbin = green(img_leaf)
     lcnts, limg = get_area(lbin)
     langle, lcenter, lr = elip(lcnts)
-    lrotated = rotate(lbin, langle, lcenter)
+    lrotated = rotate(limg, langle, lcenter)
     rotated_cl = rotate(img_leaf, langle, lcenter)
+    mask_lf = cv2.cvtColor(lrotated, cv2.COLOR_GRAY2BGR)
+    rotated_cl = cv2.bitwise_and(rotated_cl, mask_lf)
     ltate = max_tate(lrotated)
     
     scale = ltate / ftate
@@ -50,7 +54,7 @@ def test():
     reimg_cf = cv2.resize(resize_cf, dsize=None, fx=per, fy=1)
     img = kiru(reimg_cf, haba, iti)
 
-    img = cv2.addWeighted(cut_cl, 1, img, 0.5, 0)
+    #img = cv2.addWeighted(cut_cl, 1, img, 0.5, 0)
     cv2.imwrite('test.png', img)
     cv2.imwrite('test2.png', cut_cl) 
 
