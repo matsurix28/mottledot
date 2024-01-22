@@ -9,33 +9,83 @@ def main():
 
 def test():
     bin = sbin(img_fvfm)
-    cnts, fimg = get_cnts(bin)
+    cnts, fimg = get_area(bin)
     angle, center, _ = elip(cnts)
     rotated = rotate(bin, angle, center)
-    ftate = max_tate(fimg)
+    rotated_cf = rotate(img_fvfm, angle, center)
+    ftate = max_tate(rotated)
 
     lbin = green(img_leaf)
-    lcnts, limg = get_cnts(lbin)
+    lcnts, limg = get_area(lbin)
     langle, lcenter, lr = elip(lcnts)
     lrotated = rotate(lbin, langle, lcenter)
-    ltate = max_tate(limg)
+    rotated_cl = rotate(img_leaf, langle, lcenter)
+    ltate = max_tate(lrotated)
     
-    scale = ltate / ftate * 1.08
+    scale = ltate / ftate
     fresize = cv2.resize(rotated, dsize=None, fx=scale, fy=scale)
-    retate = max_tate(fresize)
+    resize_cf = cv2.resize(rotated_cf, dsize=None, fx=scale, fy=scale)
 
-    recnts, reimg = get_cnts(fresize)
+    recnts, reimg = get_area(fresize)
     reangle, recenter, fr = elip(recnts)
 
-    lcut = kiru(lrotated, lr)
-    fcut = kiru(reimg, lr)
+    #reimg = cv2.resize(reimg, dsize=None, fx=1.08, fy=1)
 
-    cv2.imwrite('test.png', lrotated) 
+    haba = list(map(lambda x: x + 150, lr))
+    lcut = kiru(lrotated, haba)
+    cut_cl = kiru(rotated_cl, haba)
+    #fcut = kiru(reimg, haba, 20)
+
+    lc_cnts, lccimg = get_cnts(lcut)
+    #fc_cnts, fccimg = get_cnts(fcut)
+
+    #print(lccimg.shape[:2])
+    #print(fccimg.shape[:2])
+
+    #gousei = kasane(lccimg, fccimg)
+
+    itiban = chosei(reimg, lccimg, haba)
+    per = (100 + itiban[1]) / 100
+    iti = itiban[2]
+    reimg_cf = cv2.resize(resize_cf, dsize=None, fx=per, fy=1)
+    img = kiru(reimg_cf, haba, iti)
+
+    img = cv2.addWeighted(cut_cl, 1, img, 0.5, 0)
+    cv2.imwrite('test.png', img)
+    cv2.imwrite('test2.png', cut_cl) 
+
+def chosei(img1, img2, haba):
+    hani = int(haba[1] / 10)
+    ll = []
+    for i in range(-20, 21, 1):
+        per = (100 + i) / 100
+        reimg = cv2.resize(img1, dsize=None, fx=per, fy=1)
+        for iti in range(-hani, hani, 1):
+            img = kiru(reimg, haba, iti)
+            _, img = get_cnts(img)
+            gousei = kasane(img, img2)
+            shiro = np.sum(gousei)
+            ll.append([shiro, i, iti])
+    itiban = max(ll, key=lambda x: x[0])
+    per = (100 + itiban[1]) / 100
+    iti = itiban[2]
+    reimg = cv2.resize(img1, dsize=None, fx=per, fy=1)
+    img = kiru(reimg, haba, iti)
+    _,img = get_cnts(img)
+    kekka = cv2.addWeighted(img2, 0.5, img, 0.5, 0)
+    print(itiban)
+    return itiban
+
 
 def green(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     green = cv2.inRange(img_hsv, (30,50,50), (90,255,255))
     return green
+
+def kasane(img1, img2):
+    kasane = cv2.bitwise_and(img1, img2)
+    #kasane = cv2.addWeighted(img1, 0.5, img2, 0.5,0)
+    return kasane
 
 def sbin(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -43,11 +93,18 @@ def sbin(img):
     _, bin = cv2.threshold(s, 10, 255, cv2.THRESH_BINARY)
     return bin
 
-def get_cnts(img):
+def get_area(img):
     cnts, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     bets_cnts = max(cnts, key=lambda x: cv2.contourArea(x))
     black = np.zeros(img.shape[:2], np.uint8)
     cv2.drawContours(black, [bets_cnts], 0, 255, -1)
+    return bets_cnts, black
+
+def get_cnts(img):
+    cnts, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    bets_cnts = max(cnts, key=lambda x: cv2.contourArea(x))
+    black = np.zeros(img.shape[:2], np.uint8)
+    cv2.drawContours(black, [bets_cnts], 0, 255, 5)
     return bets_cnts, black
 
 def elip(cnts):
@@ -74,9 +131,9 @@ def max_tate(bin):
     return maxtate
 
 def kiru(img, haba, prm=0):
-    h, w = img.shape[:2]
-    t, y = haba[:2]
-    cut = img[int(h/2 - t) : int(h/2 + t), int(w/2 - y - prm) : int(w/2 + y - prm)]
+    h, w = list(map(lambda x: int(x), img.shape[:2]))
+    t, y = list(map(lambda x: int(x), haba[:2]))
+    cut = img[int(h/2 - t/2) : int(h/2 + t/2), int(w/2 - y/2 - prm) : int(w/2 + y/2 - prm)]
     return cut
 
 if __name__ == '__main__':
