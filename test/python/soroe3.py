@@ -6,6 +6,7 @@ img_leaf = cv2.imread('./1.png')
 
 def main():
     test()
+    print(img_leaf.shape[:2])
 
 def test():
     bin = sbin(img_fvfm)

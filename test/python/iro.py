@@ -12,7 +12,7 @@ def main():
         if not (np.sum(fvfm) == 0) and not (np.sum(leaf) == 0):
             taiouhyo.append([fvfm.tolist(), leaf.tolist()])
 
-    print(taiouhyo[0])
+    print(taiouhyo[0][1])
 
 
 if __name__ == '__main__':

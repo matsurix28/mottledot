@@ -12,7 +12,7 @@ def save(name, img):
     cv2.imwrite(output, img)
 
 reader = easyocr.Reader(['en'])
-path = "test/img/bar.bmp"
+path = "bar.bmp"
 
 #img = cv2.imread(path)
 #img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
