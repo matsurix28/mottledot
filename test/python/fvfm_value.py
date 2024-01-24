@@ -9,7 +9,9 @@ def main():
     img = cv2.imread('bar.bmp')
     bar = get_scale_area(img)
     fvfm, scale = yomitori('bar.bmp')
-    fvfm_list = create_fvfmlist(fvfm[0], scale, bar, img)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h,s,v = cv2.split(img_hsv)
+    fvfm_list = create_fvfmlist(fvfm[0], scale, bar, h)
     for f in fvfm_list:
         print(f)
     #aida = fvfm[0][0] - y
