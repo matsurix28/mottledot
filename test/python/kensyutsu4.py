@@ -8,7 +8,8 @@ import numpy as np
 import os
 
 def main():
-    pass
+    k = Kensyutsu()
+    k.
 
 class Kensyutsu:
     """Extract green leaves from an image.
@@ -279,7 +280,7 @@ class Kensyutsu:
         return len(larger_cnts) > 0
     
     def __get_green_area(self, img: np.ndarray) -> int:
-        """Get the area of green area
+        """Get the area of green region.
         
         Args:
             img (:obj:`numpy.ndarray`): Input color image.
@@ -316,9 +317,18 @@ class Kensyutsu:
     
     def __best_hsv(self, img: np.ndarray) -> list:
         img_h, img_s, img_v = self.__split_hsv(img)
+        hsv_list = [img_h, img_s, img_v]
+        result = []
+        for image in hsv_list:
+            bin = self.__bin(image)
+            noise = self.__assess_noise(bin)
+            result.append([noise, image])
+        result.sort(key=lambda x: x[0])
+        return result
     
-    def extr_green_leaves(self):
-        pass
+    def extr_green_leaves(self, img_path):
+        img = cv2.imread(img_path)
+        h, s, v = self.__split_hsv(img)
 
     def extr_fvfm(self):
         pass
