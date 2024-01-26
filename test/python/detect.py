@@ -196,28 +196,7 @@ class Detect:
     def extr_green_leaves(self, input_path: str, output_path: str = './') -> np.ndarray:
         img = cv2.imread(input_path)
         cnts_list = self.__best_hsv(img)
-        #cv2.drawContours(img, cnts_list[0], -1, (255,0,0), -1)
-        #cv2.imwrite('test.png', img)
-        # Whether the green area is included or not.
-        count = 0
-        for cnts in cnts_list:
-            print(count)
-            count += 1
-            green_cnts = []
-            for cnt in cnts:
-                green_ratio = self.__green_ratio(img, cnt)
-                print(green_ratio)
-                if green_ratio > 0.4:
-                    green_cnts.append(cnt)
-                    print('hsv no green aruyo')
-            if len(green_cnts) > 0:
-                break
-        if len(green_cnts) == 0:
-            print('hsv de mitsukarankattayo')
-            mask = self.__green_range(img)
-            green_cnts = self.__get_cnts(mask)
-        print(len(green_cnts))
-        main_obj = self.__main_obj(img, green_cnts)
+        main_obj = self.__main_obj(img, cnts_list)
         cv2.drawContours(img, [main_obj], 0, (0,0,255), -1)
         cv2.imwrite('tst.png', img)
         
