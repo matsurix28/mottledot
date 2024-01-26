@@ -11,7 +11,7 @@ def main():
     d = Detect()
     #d.test('naname.JPG')
     try:
-        d.extr_green_leaves('mottle.JPG')
+        d.extr_green_leaves('bar.bmp')
     except (TypeError, ValueError) as e:
         print(e)
         sys.exit()
@@ -44,7 +44,7 @@ class Detect:
 
     def __set_default(self) -> None:
         """Set default value to each parameter."""
-        self.__resize = 1000
+        self.resize = 1000
         self.canny_thr1 = 100
         self.canny_thr2 = 200
         self.bin_thr = 50
@@ -93,7 +93,7 @@ class Detect:
         Returns:
             None
         """
-        self.__resize = resize
+        self.resize = resize
         self.canny_thr1 = canny_thr1
         self.canny_thr2 = canny_thr2
         self.bin_thr = bin_thr
@@ -128,7 +128,7 @@ class Detect:
         Returns:
             numpy.ndarray: Resized image.
         """
-        scale = self.__resize / img.shape[1]
+        scale = self.resize / img.shape[1]
         img_resized = cv2.resize(img, None, fx=scale, fy=scale)
         return img_resized
 
@@ -204,9 +204,11 @@ class Detect:
             img = self.__input_img(input_path)
         except (TypeError, ValueError) as e:
             raise
+        #img = self.__resize(img)
+        #img = cv2.blur(img, (5,5))
         cnts_list = self.__best_hsv(img)
         main_obj = self.__main_obj(img, cnts_list[0])
-        cv2.drawContours(img, [main_obj], 0, (0,0,255), -1)
+        cv2.drawContours(img, [main_obj], -1, (0,0,255), 3)
         cv2.imwrite('tst.png', img)
 
     def __input_img(self, path: str) -> np.ndarray:
@@ -219,8 +221,8 @@ class Detect:
         else:
             raise ValueError(f'Cannot access \'{path}\': No such file or directory')
 
-    def __leaf_shape(self):
-        pass        
+    def __leaf_shape(self, cnts: np.ndarray):
+        pass
 
     def __main_obj(self, img: np.ndarray, cnts: np.ndarray) -> np.ndarray:
         h, w = img.shape[:2]
