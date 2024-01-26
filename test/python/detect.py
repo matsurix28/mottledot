@@ -4,11 +4,17 @@
 
 import cv2
 import numpy as np
+import os
+import sys
 
 def main():
     d = Detect()
     #d.test('naname.JPG')
-    d.extr_green_leaves('mottle.JPG')
+    try:
+        d.extr_green_leaves('mottle.JPG')
+    except (TypeError, ValueError) as e:
+        print(e)
+        sys.exit()
 
 class Detect:
     """Detect and extract leaves and fvfm scale bar.
@@ -194,12 +200,27 @@ class Detect:
         print(green)
 
     def extr_green_leaves(self, input_path: str, output_path: str = './') -> np.ndarray:
-        img = cv2.imread(input_path)
+        try:
+            img = self.__input_img(input_path)
+        except (TypeError, ValueError) as e:
+            raise
         cnts_list = self.__best_hsv(img)
-        main_obj = self.__main_obj(img, cnts_list)
+        main_obj = self.__main_obj(img, cnts_list[0])
         cv2.drawContours(img, [main_obj], 0, (0,0,255), -1)
         cv2.imwrite('tst.png', img)
-        
+
+    def __input_img(self, path: str) -> np.ndarray:
+        if os.path.isfile(path):
+            img = cv2.imread(path)
+            if not isinstance(img, np.ndarray):
+                raise TypeError(f'\'{path}\' is not an image file')
+            else:
+                return img
+        else:
+            raise ValueError(f'Cannot access \'{path}\': No such file or directory')
+
+    def __leaf_shape(self):
+        pass        
 
     def __main_obj(self, img: np.ndarray, cnts: np.ndarray) -> np.ndarray:
         h, w = img.shape[:2]
