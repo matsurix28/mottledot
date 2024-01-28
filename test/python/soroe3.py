@@ -36,7 +36,8 @@ def test():
 
     #reimg = cv2.resize(reimg, dsize=None, fx=1.08, fy=1)
 
-    haba = list(map(lambda x: x + 150, lr))
+    #haba = list(map(lambda x: x + 150, lr))
+    haba = list(map(lambda x: x * 1.2, lr))
     lcut = kiru(lrotated, haba)
     cut_cl = kiru(rotated_cl, haba)
     #fcut = kiru(reimg, haba, 20)
