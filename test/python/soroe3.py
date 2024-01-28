@@ -49,7 +49,7 @@ def test():
     #print(fccimg.shape[:2])
 
     #gousei = kasane(lccimg, fccimg)
-
+    print()
     itiban = chosei(reimg, lccimg, haba)
     per = (100 + itiban[1]) / 100
     iti = itiban[2]
