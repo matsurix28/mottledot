@@ -1,20 +1,44 @@
 #!/usr/bin/env python3.11
 # -*- coding: utf-8 -*-
-"""Detect and extract leaves and fvfm scale bar."""
+"""Detect and extract leaf and fvfm scale bar."""
 
 import cv2
 import numpy as np
 import os
 import sys
+import argparse
 
 def main():
+    mode, input, output = args()
     d = Detect()
-    #d.test('naname.JPG')
-    try:
-        d.extr_green_leaves('leaf.JPG')
-    except (TypeError, ValueError) as e:
-        print(e)
-        sys.exit()
+    if mode == 'leaf':
+        try:
+            d.extr_leaf(input, output)
+        except (TypeError, ValueError) as e:
+            print(e)
+            sys.exit()
+    elif mode == 'green':
+        print('green')
+        try:
+            d.extr_green(input, output)
+        except (TypeError, ValueError) as e:
+            print(e)
+            sys.exit()
+    elif mode == 'fvfm':
+        try:
+            d.extr_fvfm(input, output)
+        except (TypeError, ValueError) as e:
+            print(e)
+            sys.exit()
+
+def args():
+    parser = argparse.ArgumentParser(\
+        description='Detect and extract leaf and fvfm scale bar.')
+    parser.add_argument('--mode', choices=['leaf', 'green', 'fvfm'], default='leaf')
+    parser.add_argument('-i', '--input', required=True)
+    parser.add_argument('-o', '--output', default='./')
+    args = parser.parse_args()
+    return args.mode, args.input, args.output
 
 class Detect:
     """Detect and extract leaves and fvfm scale bar.
@@ -36,7 +60,7 @@ class Detect:
             Defaults to [90, 255, 200].
         blur (:obj:`tuple`): Kernel size of blur (width, height). 
             Defaults to (5,5)
-        output_path (:obj:`str`): Output path. Defaults to './'
+        ext (:obj:`str`): Resutl file extension. Defaults to '.png'
     """
 
     def __init__(self) -> None:
@@ -53,7 +77,7 @@ class Detect:
         self.hsv_min = np.array([30,50,50])
         self.hsv_max = np.array([90,255,200])
         self.blur = (5,5)
-        self.output_path = './'
+        self.ext = '.png'
 
     def set_param(self,
                   resize=1000,
@@ -65,7 +89,7 @@ class Detect:
                   hsv_min=[30,50,50],
                   hsv_max=[90,255,200],
                   blur=(5,5),
-                  output_path='./'
+                  ext='.png'
                   ) -> None:
         """Set value to each parameter.
         
@@ -88,7 +112,7 @@ class Detect:
                 green. Defaults to [90, 255, 200].
             blur (:obj:`tuple`): Kernel size of blur (width, height).
                 Defaults to (5,5).
-            output_path (:obj:`str`): Output path. Default to './'
+            ext (:obj:`str`): Result file extension. Defaults to '.png'
 
         Returns:
             None
@@ -102,9 +126,9 @@ class Detect:
         self.hsv_min = np.array(hsv_min)
         self.hsv_max = np.array(hsv_max)
         self.blur = blur
-        self.output_path = output_path
+        self.ext = ext
 
-    def __save(self, img: np.ndarray, name: str, ext='.png') -> None:
+    def __save(self, img: np.ndarray, name: str, outdir='./') -> None:
         """Save as image file.
         
         Args:
@@ -116,7 +140,7 @@ class Detect:
         Returns:
             None
         """
-        output = self.output_path + self.img_name + '_' + name + ext
+        output = outdir + self.img_name + '_' + name + self.ext
         cv2.imwrite(output, img)
 
     def __resize(self, img: np.ndarray) -> np.ndarray:
@@ -189,31 +213,47 @@ class Detect:
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask_hsv = cv2.inRange(img_hsv, self.hsv_min, self.hsv_max)
         return mask_hsv
-    
-    def test(self, input_path):
-        img = cv2.imread(input_path)
-        img = cv2.blur(img, (5,5))
-        cnts_list = self.__best_hsv(img)
-        #cv2.drawContours(img, [cnts_list[0][1]], 0, (0,0,255), -1)
-        #cv2.imwrite('test.png', img)
-        green = self.__green_ratio(img, cnts_list[0][1])
-        print(green)
 
-    def extr_green_leaves(self, input_path: str, output_path: str = './') -> np.ndarray:
+    def extr_leaf(self, input_path: str, output_path: str = './') -> np.ndarray:
         try:
             img = self.__input_img(input_path)
         except (TypeError, ValueError) as e:
             raise
-        #img = cv2.blur(img, (5,5))
-        #img = self.__resize(img)
-        cnts_list = self.__best_hsv(img)
+        img = self.__resize(img)
+        try:
+            cnts_list = self.__best_hsv(img)
+        except (ValueError) as e:
+            raise
         for cnts in cnts_list:
             shape = self.__shape_leaf(img, cnts)
             if shape is not None:
                 break
+        if shape is None:
+            raise ValueError('No contours were detected.')
         main_obj = self.__main_obj(img, [shape])
-        cv2.drawContours(img, [main_obj], -1, (0,0,255), 3)
-        cv2.imwrite('tst.png', img)
+        res_img = img.copy()
+        cv2.drawContours(res_img, [main_obj], -1, (0,0,255), 3)
+        self.__save(res_img, 'leaf-cnts', outdir=output_path)
+        return img, main_obj
+
+    def extr_green(self, input_path: str, output_path: str = './'):
+        try:
+            img = self.__input_img(input_path)
+        except (TypeError, ValueError) as e:
+            raise
+        img = self.__resize(img)
+        mask_green = self.__green_range(img)
+        cnts = self.__get_cnts(mask_green)
+        if len(cnts) > 0:
+            main_obj = self.__main_obj(img, cnts)
+        else:
+            raise ValueError('No object was detected.')
+        res_img = img.copy()
+        print(len(main_obj))
+        cv2.drawContours(res_img, [main_obj], -1, (0,0,255), 3)
+        self.__save(res_img, 'green-cnts', outdir=output_path)
+        return img, main_obj
+
 
     def __input_img(self, path: str) -> np.ndarray:
         if os.path.isfile(path):
@@ -221,6 +261,7 @@ class Detect:
             if not isinstance(img, np.ndarray):
                 raise TypeError(f'\'{path}\' is not an image file')
             else:
+                self.img_name = os.path.splitext(os.path.basename(path))[0]
                 return img
         else:
             raise ValueError(f'Cannot access \'{path}\': No such file or directory')
@@ -272,7 +313,6 @@ class Detect:
             main_obj = obj_list[0][1]
         return main_obj
 
-
     def __green_ratio(self, img: np.ndarray, cnts: np.ndarray) -> float:
         h, w = img.shape[:2]
         mask = np.zeros((h, w, 3), np.uint8)
@@ -287,7 +327,6 @@ class Detect:
         a = h* w
         print('total area: ', a)
         return green_ratio
-
 
     def __best_hsv(self, img: np.ndarray) -> list:
         """Sort H, S, and V in order of decreasing noise
@@ -313,9 +352,12 @@ class Detect:
             noise = self.__assess_noise(image)
             if len(cnts) > 0:
                 best.append([noise, cnts])
-        best.sort(key=lambda x: x[0])
-        result = [r[1] for r in best]
-        return result
+        if len(best):
+            best.sort(key=lambda x: x[0])
+            result = [r[1] for r in best]
+            return result
+        else:
+            raise ValueError('No object was detected.')
 
 
 if __name__ == '__main__':
