@@ -11,7 +11,7 @@ def main():
     d = Detect()
     #d.test('naname.JPG')
     try:
-        d.extr_green_leaves('bar.bmp')
+        d.extr_green_leaves('leaf.JPG')
     except (TypeError, ValueError) as e:
         print(e)
         sys.exit()
@@ -47,7 +47,7 @@ class Detect:
         self.resize = 1000
         self.canny_thr1 = 100
         self.canny_thr2 = 200
-        self.bin_thr = 50
+        self.bin_thr = 60
         self.bin_max = 255
         self.min_area = 100
         self.hsv_min = np.array([30,50,50])
@@ -204,10 +204,14 @@ class Detect:
             img = self.__input_img(input_path)
         except (TypeError, ValueError) as e:
             raise
-        #img = self.__resize(img)
         #img = cv2.blur(img, (5,5))
+        #img = self.__resize(img)
         cnts_list = self.__best_hsv(img)
-        main_obj = self.__main_obj(img, cnts_list[0])
+        for cnts in cnts_list:
+            shape = self.__shape_leaf(img, cnts)
+            if shape is not None:
+                break
+        main_obj = self.__main_obj(img, [shape])
         cv2.drawContours(img, [main_obj], -1, (0,0,255), 3)
         cv2.imwrite('tst.png', img)
 
@@ -221,8 +225,37 @@ class Detect:
         else:
             raise ValueError(f'Cannot access \'{path}\': No such file or directory')
 
-    def __leaf_shape(self, cnts: np.ndarray):
-        pass
+    def __shape_leaf(self, img: np.ndarray, cnts: np.ndarray):
+        shape_list = []
+        for cnt in cnts:
+            diff_approx = self.__approx_ellipse(img, cnt)
+            if diff_approx:
+                shape_list.append([diff_approx, cnt])
+        shape_list.sort(key=lambda x: x[0])
+        if len(shape_list) > 0:
+            return shape_list[0][1]
+
+    def __approx_ellipse(self, img: np.ndarray, cnts: np.ndarray):
+        h, w = img.shape[:2]
+        img_ellipse = np.zeros(img.shape[:3], np.uint8)
+        img_cnts = img_ellipse.copy()
+        ellipse = cv2.fitEllipse(cnts)
+        x, y = ellipse[0]
+        elp_h, elp_w = ellipse[1]
+        cv2.ellipse(img_ellipse, ellipse, (255,255,255), -1)
+        cv2.drawContours(img_cnts, [cnts], -1, (255,255,255), -1)
+        img_and = cv2.bitwise_and(img_ellipse, img_cnts)
+        img_xor = cv2.bitwise_xor(img_and, img_ellipse)
+        xor_area = np.sum(img_xor) / 255 / 3
+        elp_area = np.sum(img_ellipse) / 255 / 3
+        # Whether the ellipse extends beyond the image or not.
+        if ((np.abs(h / 2 - y) + (elp_h / 2)) < (h / 2 * 1.05)) and \
+           ((np.abs(w / 2 - x) + (elp_w / 2)) < (w / 2 * 1.05)):
+            # How far away from the ellipse.
+            if (xor_area / elp_area) < 0.2:
+                return xor_area
+        else:
+            return False
 
     def __main_obj(self, img: np.ndarray, cnts: np.ndarray) -> np.ndarray:
         h, w = img.shape[:2]

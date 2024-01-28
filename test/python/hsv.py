@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-path = './bar.bmp'
+path = './tukue.JPG'
 
 img = cv2.imread(path)
 #img = cv2.resize(img, dsize=None, fx=0.5, fy=0.5)
