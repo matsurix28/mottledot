@@ -76,7 +76,6 @@ class Fvfm:
         else:
             raise ValueError('Cannot read Fv/Fm value.')
             
-
     def __get_area(self, img: np.ndarray):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, bin = cv2.threshold(gray, self.bin_thr, 255, cv2.THRESH_BINARY_INV)
