@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.11
 # -*- coding: utf-8 -*-
-"""Detect and extract leaf and fvfm scale bar."""
+"""Detect and extract leaves."""
 
 import cv2
 import numpy as np
@@ -24,24 +24,18 @@ def main():
         except (TypeError, ValueError) as e:
             print(e)
             sys.exit()
-    elif mode == 'fvfm':
-        try:
-            d.extr_fvfm(input, output)
-        except (TypeError, ValueError) as e:
-            print(e)
-            sys.exit()
 
 def args():
     parser = argparse.ArgumentParser(\
         description='Detect and extract leaf and fvfm scale bar.')
-    parser.add_argument('--mode', choices=['leaf', 'green', 'fvfm'], default='leaf')
+    parser.add_argument('--mode', choices=['leaf', 'green'], default='leaf')
     parser.add_argument('-i', '--input', required=True)
     parser.add_argument('-o', '--output', default='./')
     args = parser.parse_args()
     return args.mode, args.input, args.output
 
 class Detect:
-    """Detect and extract leaves and fvfm scale bar.
+    """Detect and extract leaves.
     
     Extract fresh leaves, stained leaves, Fv/Fm value scale bar 
     from an image, and detect each leaf size and tilt.
@@ -253,7 +247,6 @@ class Detect:
         cv2.drawContours(res_img, [main_obj], -1, (0,0,255), 3)
         self.__save(res_img, 'green-cnts', outdir=output_path)
         return img, main_obj
-
 
     def __input_img(self, path: str) -> np.ndarray:
         if os.path.isfile(path):
