@@ -119,7 +119,7 @@ class Fvfm:
         except ValueError as e:
             raise
         if output_path is not None:
-            output = output_path + self.img_name + '_FvFmList.txt'
+            output = output_path + '/' + self.img_name + '_FvFmList.txt'
             f = open(output, 'w')
             for fvfm in fvfm_list:
                 f.write(str(fvfm) + '\n')
