@@ -13,7 +13,8 @@ def main():
     d = Detect()
     if mode == 'leaf':
         try:
-            d.extr_leaf(input, output)
+            img, _ = d.extr_leaf(input, output)
+            cv2.imwrite('test.png', img)
         except (TypeError, ValueError) as e:
             print(e)
             sys.exit()
@@ -228,6 +229,7 @@ class Detect:
         res_img = img.copy()
         cv2.drawContours(res_img, [main_obj], -1, (0,0,255), 3)
         self.__save(res_img, 'leaf-cnts', outdir=output_path)
+        img = self.__extr(img, main_obj)
         return img, main_obj
 
     def extr_green(self, input_path: str, output_path: str = './'):
@@ -235,7 +237,7 @@ class Detect:
             img = self.__input_img(input_path)
         except (TypeError, ValueError) as e:
             raise
-        img = self.__resize(img)
+        #img = self.__resize(img)
         mask_green = self.__green_range(img)
         cnts = self.__get_cnts(mask_green)
         if len(cnts) > 0:
@@ -246,7 +248,14 @@ class Detect:
         print(len(main_obj))
         cv2.drawContours(res_img, [main_obj], -1, (0,0,255), 3)
         self.__save(res_img, 'green-cnts', outdir=output_path)
+        img = self.__extr(img, main_obj)
         return img, main_obj
+
+    def __extr(self, img, cnts):
+        mask = np.zeros(img.shape, np.uint8)
+        cv2.drawContours(mask, [cnts], 0, (255, 255, 255), -1)
+        result = cv2.bitwise_and(img, mask)
+        return result
 
     def __input_img(self, path: str) -> np.ndarray:
         if os.path.isfile(path):
