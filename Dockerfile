@@ -4,8 +4,11 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y \
     libgl1-mesa-dev \
     libglib2.0-0 \
-    git
+    git \
+    tk-dev \
+    libsm6
 
 RUN pip install \
     opencv-python \
-    easyocr
+    easyocr \
+    matplotlib

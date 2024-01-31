@@ -21,6 +21,17 @@ def main():
         print(e)
         sys.exit()
 
+def test():
+    #input_path, output_path = args()
+    img = 'test/output/daen/bar.bmp'
+    fvfm = Fvfm()
+    try:
+        fvfm_list = fvfm.get(img, './')
+    except (TypeError, ValueError) as e:
+        print(e)
+        sys.exit()
+    print(fvfm_list)
+
 def args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', required=True)
@@ -115,7 +126,9 @@ class Fvfm:
         except ValueError as e:
             raise
         try:
-            fvfm_list = self.__create_fvfm_list(std_fvfm, scale, bar_area, img)
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
+            h,s,v = cv2.split(hsv)
+            fvfm_list = self.__create_fvfm_list(std_fvfm, scale, bar_area, h)
         except ValueError as e:
             raise
         if output_path is not None:
@@ -161,4 +174,5 @@ class Fvfm:
             raise ValueError(f'Cannot access \'{path}\': No such file or directory')
 
 if __name__ == '__main__':
-    main()
+    #main()
+    test()
