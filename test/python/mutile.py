@@ -14,17 +14,17 @@ def main():
     length = h * w
     num_cpu = os.cpu_count()
     img1 = img1.reshape(length, 3)
-    #img1 = np.array_split(img1, num_cpu, axis=0)
+    img1 = np.array_split(img1, num_cpu, axis=0)
     img2 = img2.reshape(length, 3)
-    #img2 = np.array_split(img2, num_cpu, axis=0)
+    img2 = np.array_split(img2, num_cpu, axis=0)
     #fvfm, bgr = atai()
     start = time.time()
     val = []
-    res = keisan(img1, img2)
-    #for i in range(num_cpu):
-    #    val.append([img1[i], img2[i]])
-    #with Pool(processes=num_cpu) as p:
-    #    res = p.map(func=keisan_wrap, iterable=val)
+    #res = keisan(img1, img2)
+    for i in range(num_cpu):
+        val.append([img1[i], img2[i]])
+    with Pool(processes=num_cpu) as p:
+        res = p.map(func=keisan_wrap, iterable=val)
     end = time.time()
     print('time: ', end - start)
 
