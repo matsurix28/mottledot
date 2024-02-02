@@ -17,7 +17,7 @@ def main():
         res = p.run(img1, img2, fvfm)
     except (ValueError, TypeError) as e:
         print(e)
-    print(len(res))
+    #print(type(res))
 
 def args():
     parser = argparse.ArgumentParser()
@@ -42,25 +42,32 @@ class Pickcell:
         for i in range(self.num_cpu):
             px_list.append([img_leaf[i], img_fvfm[i]])
         with Pool(self.num_cpu) as p:
-            px_fvfm = p.map(self.pick_wrap, px_list)
-        result = []
-        for i in range(len(px_fvfm)):
-            result.extend(px_fvfm[i])
+            px = p.map(self.pick_wrap, px_list)
+        #pxs, fvfms = []
+        #for i in range(len(px)):
+        #    pxs.extend(px[i])
+        #    fvfms.extend(fvfm[i])
         end = time.time()
         print('time: ', end - start)
-        return result
+        print(len(px))
+        #return pxs,fvfms
 
     def __pick(self, img_leaf, img_fvfm):
-        result = []
+        #result = []
+        px = []
+        fvfm = []
         length = img_leaf.shape[0]
         for i in range(length):
             if not ((img_leaf[i].sum() <= 50) or (img_fvfm[i].sum() == 0)):
                 idx = np.abs(self.color - img_fvfm[i]).sum(axis=1).argmin()
-                result.append([img_leaf[i], self.value[idx]])
-        return result
+                #result.append([img_leaf[i], self.value[idx]])
+                px.append(img_leaf[i])
+                fvfm.append(self.value[idx])
+        return px, fvfm
     
     def pick_wrap(self, args):
-        return self.__pick(*args)
+        px, fvfm = self.__pick(*args)
+        return px, fvfm
     
     def __input(self, input):
         if type(input) == str:
