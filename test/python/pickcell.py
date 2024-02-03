@@ -61,11 +61,11 @@ class Pickcell:
             px_list.append([img_leaf[i], img_fvfm[i]])
         with Pool(self.num_cpu) as p:
             result = p.map(self.pick_wrap, px_list)
-        pxs = fvfms = []
-        print(len(result[7][0]))
-        print(len(result[7][1]))
+        pxs = []
+        fvfms = []
+        #print(result[7][0][0])
+        #print(result[0][1])
         for i in range(len(result)):
-            print(i)
             pxs.extend(result[i][0])
             fvfms.extend(result[i][1])
         end = time.time()
