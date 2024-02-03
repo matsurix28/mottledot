@@ -21,3 +21,5 @@ param = [0,0,0,0,0]
 optimised_param =  optimize.leastsq(fitt, param, args=(b, g, r))
 
 print(optimised_param)
+
+f = a*x**2 + b*y**2 + c*x + d*y + e
