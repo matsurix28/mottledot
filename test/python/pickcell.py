@@ -26,22 +26,6 @@ class Pickcell:
     def __init__(self) -> None:
         self.num_cpu = os.cpu_count()
 
-    def run_hue(self, img_leaf, img_fvfm, fvfm_list):
-        try:
-            img_leaf = self.__input(img_leaf)
-            img_fvfm = self.__input(img_fvfm)
-            self.__set(fvfm_list)
-        except (TypeError, ValueError) as e:
-            raise
-        if img_leaf.shape != img_fvfm.shape:
-            raise ValueError('Size differs in the two images.')
-        leaf_hsv = cv2.cvtColor(img_leaf, cv2.COLOR_BGR2HSV)
-        img_leaf, _, _ = cv2.split(leaf_hsv)
-        img_leaf = self.__reshape_hue(img_leaf)
-        img_fvfm = self.__reshape_bgr(img_fvfm)
-        img_fvfm = np.array_split(img_fvfm, self.num_cpu, axis=0)
-        px_list = []
-
     def run(self, img_leaf, img_fvfm, fvfm_list):
         try:
             img_leaf = self.__input(img_leaf)
@@ -51,48 +35,43 @@ class Pickcell:
             raise
         if img_leaf.shape != img_fvfm.shape:
             raise ValueError('Size differs in the two images.')
+        img_hue = self.__reshape_hue(img_leaf)
         img_leaf = self.__reshape_bgr(img_leaf)
         img_fvfm = self.__reshape_bgr(img_fvfm)
         img_leaf = np.array_split(img_leaf, self.num_cpu, axis=0)
         img_fvfm = np.array_split(img_fvfm, self.num_cpu, axis=0)
+        img_hue = np.array_split(img_hue, self.num_cpu, axis=0) 
         px_list = []
-        start = time.time()
         for i in range(self.num_cpu):
-            px_list.append([img_leaf[i], img_fvfm[i]])
+            px_list.append([img_leaf[i], img_fvfm[i], img_hue[i]])
         with Pool(self.num_cpu) as p:
             result = p.map(self.pick_wrap, px_list)
-        pxs = []
-        fvfms = []
-        #print(result[7][0][0])
-        #print(result[0][1])
+        res_px = []
+        res_fvfm = []
+        res_hue = []
         for i in range(len(result)):
-            pxs.extend(result[i][0])
-            fvfms.extend(result[i][1])
-        end = time.time()
-        print(fvfms[-1])
-        print(fvfms[1])
-        print(pxs[0])
-        print(pxs[1])
-        print('time: ', end - start)
-        #print(len(px))
-        #return pxs,fvfms
+            res_px.extend(result[i][0])
+            res_fvfm.extend(result[i][1])
+            res_hue.extend(result[i][2])
+        return res_px, res_hue, res_fvfm
 
-    def __pick(self, img_leaf, img_fvfm):
+    def __pick(self, img_leaf, img_fvfm, img_hue):
         #result = []
         px = []
         fvfm = []
+        hue = []
         length = img_leaf.shape[0]
         for i in range(length):
             if not ((img_leaf[i].sum() <= 50) or (img_fvfm[i].sum() == 0)):
                 idx = np.abs(self.color - img_fvfm[i]).sum(axis=1).argmin()
-                #result.append([img_leaf[i], self.value[idx]])
                 px.append(img_leaf[i])
+                hue.append(img_hue[i])
                 fvfm.append(self.value[idx])
-        return px, fvfm
+        return px, fvfm, hue
     
     def pick_wrap(self, args):
-        px, fvfm = self.__pick(*args)
-        return px, fvfm
+        px, fvfm, hue = self.__pick(*args)
+        return px, fvfm, hue
     
     def __input(self, input):
         if type(input) == str:
@@ -119,7 +98,9 @@ class Pickcell:
     def __reshape_hue(self, img):
         h, w = img.shape[:2]
         length = h * w
-        return img.reshape(length)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
+        h, _, _ = cv2.split(hsv)
+        return h.reshape(length)
 
     def __set(self, fvfm_list):
         self.color = np.array([a[0] for a in fvfm_list])
