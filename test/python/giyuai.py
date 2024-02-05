@@ -9,11 +9,13 @@ img_pil = Image.fromarray(img_rgb)
 print(img_pil.size)
 
 
+
 root = tk.Tk()
+img_tk = ImageTk.PhotoImage(img_pil)
 root.title('title dayo')
 root.geometry('800x450')
 canvas = tk.Canvas(root, width=img.shape[1], height=img.shape[0])
 canvas.pack()
-img_tk = ImageTk.PhotoImage(img_pil)
+
 canvas.create_image(0,0, image=img_tk, anchor='nw')
 root.mainloop()
