@@ -11,4 +11,5 @@ RUN apt-get update && \
 RUN pip install \
     opencv-python \
     easyocr \
-    matplotlib
+    matplotlib \
+    tkinterdnd2
