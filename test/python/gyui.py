@@ -92,6 +92,11 @@ class DetectFrame(ttk.Frame):
         value.pack(side='left', fill='x', expand=True)
         up_btn = ttk.Button(master, text='▲')
         up_btn.pack(side='right')
+        run_btn = ttk.Button(master, text='run')
+        run_btn.pack(side='bottom')
+
+    #def _green_bar(self, master):
+
 
 
 class BfAfFrame(ttk.Frame):
