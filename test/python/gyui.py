@@ -25,6 +25,8 @@ class Application():
         s.configure('MyWidget.TFrame', background='red')
         dtct = DetectFrame(main)
         main.add_tab(dtct, 'Detect')
+        fvfm = FvFmFrame(main)
+        main.add_tab(fvfm, 'Fv/Fm')
         root.mainloop()
 
 class MainFrame(ttk.Frame):
@@ -200,5 +202,98 @@ class ImageChange(ttk.Frame):
         self.img_tk = ImageTk.PhotoImage(self.img_pil)
         self.bimg.configure(image=self.img_tk)
 
+class FvFmFrame(ttk.Frame):
+    def __init__(self, master):
+        super().__init__(master, borderwidth=5, relief='groove')
+        self.pack(expand=True, fill='both')
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        img_frm = ttk.Frame(self, relief='groove', borderwidth=5)
+        img_frm.grid_propagate(0)
+        img_frm.grid(row=0, column=0, sticky='NSEW')
+        val_frm = ttk.Frame(self, relief='groove', borderwidth=5)
+        val_frm.grid_propagate(0)
+        val_frm.grid(row=0, column=1, sticky='NSEW')
+        
+        self._img(img_frm)
+        self._bar(val_frm)
+
+    def _img(self, master):
+        lbl_frm = ttk.Frame(master)
+        lbl_frm.grid_propagate(0)
+        bf_img_frm = ttk.Frame(master)
+        bf_img_frm.grid_propagate(0)
+        arrow = tk.Label(master, text='↓', bg='green')
+        arrow.grid_propagate(0)
+        af_img_frm = ttk.Frame(master)
+        af_img_frm.grid_propagate(0)
+        lbl_frm.grid(row=0, column=0, sticky='EW')
+        bf_img_frm.grid(row=1, column=0, sticky='NSEW')
+        arrow.grid(row=2, column=0)
+        af_img_frm.grid(row=3, column=0, sticky='NSEW')
+        master.grid_columnconfigure(0, weight=1)
+        #master.grid_rowconfigure(0, weight=1)
+        master.grid_rowconfigure(1, weight=1)
+        #master.grid_rowconfigure(2, weight=1)
+        master.grid_rowconfigure(3, weight=1)
+        lbl = tk.Label(lbl_frm, bg='red')
+        lbl.pack(expand=True, fill='both')
+        img1 = tk.Label(bf_img_frm, bg='blue')
+        img1.pack(expand=True, fill='both')
+        img2 = tk.Label(af_img_frm, bg='red')
+        img2.pack(expand=True, fill='both')
+        
+    def _bar(self, master):
+        list_frm = ScrollList(master)
+        iro = [[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119]]
+        val = [832.0, 825.0, 820.0, 800.0, 790.0]
+        self.imgs = []
+        for color in iro:
+            img = np.full((48,48,3), color, np.uint8)
+            print(img)
+            img = Image.fromarray(img)
+            img = ImageTk.PhotoImage(img)
+            self.imgs.append(img)
+        list_frm.set_list(val, self.imgs)
+
+class ScrollList(ttk.Frame):
+    def __init__(self, master, list=None):
+        super().__init__(master)
+        self.pack(expand=True, fill='both')
+        #btn = ttk.Button(self, text='Go', command=self.add_list)
+        #btn.pack()
+
+    def set_list(self, list, imgs):
+        if len(list) != len(imgs):
+            raise ValueError('The length of the list is incorrect.')
+        for (text, img) in zip(list, imgs):
+            label = ttk.Label(self, text=text, image=img, compound='left')
+            label.pack(expand=True, fill='x')
+
+    def add_list(self):
+        img = Image.open('test/output/daen/1.png')
+        img = img.resize((48,48))
+        self.img = ImageTk.PhotoImage(img)
+        lbl = ttk.Label(self, text='tsuika bun', image=self.img, compound='left')
+        lbl.pack(expand=True, fill='x')
+        print('add')
+
+def test():
+    root = tk.Tk()
+    root.geometry('400x300')
+    img = Image.open('test/output/daen/1.png')
+    img = img.resize((48,48))
+    img = ImageTk.PhotoImage(img)
+    texts = []
+    imgs = []
+    for i in range(3):
+        texts.append(f'test NO: {i}')
+        imgs.append(img)
+    sl = ScrollList(root)
+    sl.set_list(texts, imgs)
+    root.mainloop()
+
 if __name__ == '__main__':
     main()
+    #test()
