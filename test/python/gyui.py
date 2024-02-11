@@ -214,6 +214,7 @@ class FvFmFrame(ttk.Frame):
         img_frm.grid(row=0, column=0, sticky='NSEW')
         val_frm = ttk.Frame(self, relief='groove', borderwidth=5)
         val_frm.grid_propagate(0)
+        val_frm.pack_propagate(0)
         val_frm.grid(row=0, column=1, sticky='NSEW')
         
         self._img(img_frm)
@@ -243,40 +244,57 @@ class FvFmFrame(ttk.Frame):
         img1.pack(expand=True, fill='both')
         img2 = tk.Label(af_img_frm, bg='red')
         img2.pack(expand=True, fill='both')
+        btn = ttk.Button(master, text='RUN')
+        btn.pack()
         
     def _bar(self, master):
         list_frm = ScrollList(master)
-        iro = [[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119]]
-        val = [832.0, 825.0, 820.0, 800.0, 790.0]
+        iro = [[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119]]
+        val = [832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0]
         self.imgs = []
         for color in iro:
-            img = np.full((48,48,3), color, np.uint8)
-            print(img)
+            img = np.full((36,36,3), color, np.uint8)
             img = Image.fromarray(img)
             img = ImageTk.PhotoImage(img)
             self.imgs.append(img)
         list_frm.set_list(val, self.imgs)
 
-class ScrollList(ttk.Frame):
+class ScrollList(tk.Canvas):
     def __init__(self, master, list=None):
         super().__init__(master)
-        self.pack(expand=True, fill='both')
+        self.frame = ttk.Frame(self)
+        self.frame.bind('<Configure>', self.resize_bar)
+        scroll_bar = ttk.Scrollbar(self, orient='vertical', command=self.yview)
+        scroll_bar.pack(side='right',fill='y')
+        self.configure(yscrollcommand=scroll_bar.set)
+        self.configure(scrollregion=(0,0,0,600))
+        self.create_window((0,0), window=self.frame, anchor='nw')
+        self.pack_propagate(0)
+        self.pack(fill='both', expand=True)
+        
         #btn = ttk.Button(self, text='Go', command=self.add_list)
         #btn.pack()
 
+    def resize_bar(self, evnet):
+        w = self.frame.winfo_width()
+        h = self.frame.winfo_height()
+        print(h,w)
+        self.configure(scrollregion=(0,0,0,h))
+
     def set_list(self, list, imgs):
+        print(len(list))
         if len(list) != len(imgs):
             raise ValueError('The length of the list is incorrect.')
         for (text, img) in zip(list, imgs):
-            label = ttk.Label(self, text=text, image=img, compound='left')
-            label.pack(expand=True, fill='x')
+            label = ttk.Label(self.frame, text=text, image=img, compound='left')
+            label.pack()
 
     def add_list(self):
         img = Image.open('test/output/daen/1.png')
         img = img.resize((48,48))
         self.img = ImageTk.PhotoImage(img)
         lbl = ttk.Label(self, text='tsuika bun', image=self.img, compound='left')
-        lbl.pack(expand=True, fill='x')
+        lbl.pack(expand=True, fill='x', side='top')
         print('add')
 
 def test():
@@ -294,6 +312,22 @@ def test():
     sl.set_list(texts, imgs)
     root.mainloop()
 
+def test2():
+    root = tk.Tk()
+    root.geometry('200x300')
+    sc = ScrollList(root)
+    iro = [[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119]]
+    val = [832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0]
+    imgs = []
+    for color in iro:
+        img = np.full((36,36,3), color, np.uint8)
+        img = Image.fromarray(img)
+        img = ImageTk.PhotoImage(img)
+        imgs.append(img)
+    print(len(imgs))
+    sc.set_list(val, imgs)
+    root.mainloop()
+
 if __name__ == '__main__':
     main()
-    #test()
+    #test2()
