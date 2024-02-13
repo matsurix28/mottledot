@@ -1,10 +1,10 @@
-from tkinter import ttk
 import tkinter as tk
-import tkinterdnd2 as dnd2
-from PIL import Image, ImageTk
-from tkinter import filedialog
+from tkinter import filedialog, ttk
+
 import cv2
 import numpy as np
+import tkinterdnd2 as dnd2
+from PIL import Image, ImageTk
 
 
 def main():

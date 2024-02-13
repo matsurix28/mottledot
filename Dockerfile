@@ -12,4 +12,5 @@ RUN pip install \
     opencv-python \
     easyocr \
     matplotlib \
-    tkinterdnd2
+    tkinterdnd2 \
+    isort
