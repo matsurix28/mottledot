@@ -106,7 +106,7 @@ class InputImageFrame(ttk.Frame):
         self._resize_img(event.width, event.height)
 
     def _drop(self, event):
-        print(event)
+        print(event.data)
 
 # GUI module
 class ScrollList(tk.Canvas):
