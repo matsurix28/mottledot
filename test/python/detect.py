@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 """Detect and extract leaves."""
 
-import cv2
-import numpy as np
+import argparse
 import os
 import sys
-import argparse
+
+import cv2
+import numpy as np
+
 
 def main():
     mode, input, output = args()
@@ -258,7 +260,9 @@ class Detect:
         return result
 
     def __input_img(self, path: str) -> np.ndarray:
-        if os.path.isfile(path):
+        if path == '':
+            raise ValueError('Nothing has been entered. Please select an input image')
+        elif os.path.isfile(path):
             img = cv2.imread(path)
             if not isinstance(img, np.ndarray):
                 raise TypeError(f'\'{path}\' is not an image file')
