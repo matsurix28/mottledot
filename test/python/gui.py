@@ -68,6 +68,7 @@ class InputImageFrame(ttk.Frame):
         self.img_area.bind('<Configure>', self._transform_frm)
         self.img_area.drop_target_register(dnd2.DND_FILES)
         self.img_area.dnd_bind('<<Drop>>', self._drop)
+        self.ratio = 0
         lbl_frm.pack(fill='x')
         self.img_area.pack(fill='both', expand=True)
         self.filepath = tk.StringVar(value='Select File.')
@@ -91,6 +92,8 @@ class InputImageFrame(ttk.Frame):
 
     def _resize_img(self, new_width, new_height):
         new_ratio = new_height / new_width
+        if self.ratio == 0:
+            return
         if new_ratio >= self.ratio:
             new_height = new_width * self.ratio
         else:

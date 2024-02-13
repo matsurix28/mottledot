@@ -1,8 +1,14 @@
 import tkinter as tk
 
-import tkinterdnd2 as dnd
+import tkinterdnd2 as dnd2
 
-root = dnd.TkinterDnD.Tk()
 
-tk.StringVar()
+def drop(event):
+    print(event)
 
+root = dnd2.Tk()
+root.geometry('300x400')
+frm = tk.Frame(root)
+frm.drop_target_register(dnd2.DND_FILES)
+frm.dnd_bind('<<Drop>>', drop)
+root.mainloop()
