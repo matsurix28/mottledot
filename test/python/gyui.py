@@ -27,6 +27,8 @@ class Application():
         main.add_tab(dtct, 'Detect')
         fvfm = FvFmFrame(main)
         main.add_tab(fvfm, 'Fv/Fm')
+        arrange = Arrange(main)
+        main.add_tab(arrange, 'Arrange')
         root.mainloop()
 
 class MainFrame(ttk.Frame):
@@ -99,7 +101,24 @@ class DetectFrame(ttk.Frame):
 
     #def _green_bar(self, master):
 
+class InputImageFrame(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg='blue')
+        lbl_frame = ttk.Frame(self)
+        self.img = ttk.Label(self)
+        
+        lbl = ttk.Label(lbl_frame, text='Label dayooo')
+        btn = ttk.Button(lbl_frame, text='▼', command=self.btn_click)
+        btn.pack(side='right')
+        lbl.pack(fill='x', expand=True)
+        lbl_frame.pack(fill='x')
+        self.img.pack(expand=True)
+        
+    def set_img(self, img):
+        self.img.configure(image=img)
 
+    def btn_click(self):
+        print('Click sareta')
 
 class BfAfFrame(ttk.Frame):
     def __init__(self, master, txt):
@@ -203,6 +222,7 @@ class ImageChange(ttk.Frame):
         self.bimg.configure(image=self.img_tk)
 
 class FvFmFrame(ttk.Frame):
+
     def __init__(self, master):
         super().__init__(master, borderwidth=5, relief='groove')
         self.pack(expand=True, fill='both')
@@ -211,6 +231,7 @@ class FvFmFrame(ttk.Frame):
         self.grid_columnconfigure(1, weight=1)
         img_frm = ttk.Frame(self, relief='groove', borderwidth=5)
         img_frm.grid_propagate(0)
+        img_frm.propagate(0)
         img_frm.grid(row=0, column=0, sticky='NSEW')
         val_frm = ttk.Frame(self, relief='groove', borderwidth=5)
         val_frm.grid_propagate(0)
@@ -297,6 +318,28 @@ class ScrollList(tk.Canvas):
         lbl.pack(expand=True, fill='x', side='top')
         print('add')
 
+class Arrange(ttk.Frame):
+    def __init__(self, master):
+        super().__init__(master, relief='groove', borderwidth=20)
+        self.pack(fill='both', expand=True)
+        self.grid_columnconfigure(0,weight=5)
+        self.grid_columnconfigure(1,weight=1)
+        self.grid_columnconfigure(2,weight=5)
+        self.grid_rowconfigure(0, weight=10)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=10)
+        input1 = InputImageFrame(self)
+        input1.grid(row=0, column=0, sticky='NSEW')
+        input2 = InputImageFrame(self)
+        input2.grid(row=2, column=0, sticky='NSEW')
+        yajirushi = ttk.Button(self, text='→')
+        yajirushi.grid(row=1, column=1)
+        kekka = tk.Label(self, bg='green')
+        kekka.grid(row=0, column=2, rowspan=3, sticky='NSEW')
+        #a.pack(fill='both', expand=True)
+        
+
+
 def test():
     root = tk.Tk()
     root.geometry('400x300')
@@ -327,6 +370,7 @@ def test2():
     print(len(imgs))
     sc.set_list(val, imgs)
     root.mainloop()
+
 
 if __name__ == '__main__':
     main()
