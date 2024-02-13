@@ -73,11 +73,11 @@ class InputImageFrame(ttk.Frame):
         self.img_area.pack(fill='both', expand=True)
         self.filepath = tk.StringVar(value='Select File.')
         lbl = ttk.Label(lbl_frm, textvariable=self.filepath, relief='groove')
-        btn = ttk.Button(lbl_frm, text='▼', command=self._get_path)
+        btn = ttk.Button(lbl_frm, text='▼', command=self._select_img)
         btn.pack(side='right')
         lbl.pack(fill='x')
 
-    def _get_path(self):
+    def _select_img(self):
         img_ext = ['*.bmp', '*.png', '*.PNG', '*.jpg', '*.JPG', '*.jpeg', '*.tiff']
         path = filedialog.askopenfilename(filetypes=[('Image file', img_ext), ('All file', '*')])
         self.filepath.set(path)
@@ -106,7 +106,8 @@ class InputImageFrame(ttk.Frame):
         self._resize_img(event.width, event.height)
 
     def _drop(self, event):
-        print(event.data)
+        self.filepath.set(event.data)
+        self._set_img(event.data)
 
 # GUI module
 class ScrollList(tk.Canvas):
