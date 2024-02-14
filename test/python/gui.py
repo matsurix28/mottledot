@@ -16,6 +16,7 @@ class Application():
     def __init__(self) -> None:
         self.root = dnd2.Tk()
         self.root.geometry('1280x720')
+        self.root.minsize()
         self.root.title('Pickcell Color')
         self.main_frm = MainFrame(self.root)
 
@@ -47,12 +48,19 @@ class DetectFrame(ttk.Frame):
     def __init__(self, master):
         super().__init__(master, relief='groove', borderwidth=10)
         self.d = Detect()
+        self.def_min_h = self.d.hsv_min[0]
+        self.def_max_h = self.d.hsv_max[0]
+        self.def_thresh = self.d.bin_thr
         self.thresh = tk.StringVar()
-        self.thresh.set(self.d.bin_thr)
+        self.thresh.set(self.def_thresh)
+        self.thresh.trace('w', self._thresh_bar)
         self.min_h = tk.StringVar()
-        self.min_h.set(self.d.hsv_min[0])
+        self.min_h.set(self.def_min_h)
+        self.min_h.trace('w', self._hue_bar)
         self.max_h = tk.StringVar()
-        self.max_h.set(self.d.hsv_max[0])
+        self.max_h.set(self.def_max_h)
+        self.max_h.trace('w', self._hue_bar)
+        self.progress_var = tk.StringVar()
         self._set_style()
         img_frm = self._image_frame()
         method_frm = self._method_frame()
@@ -66,33 +74,27 @@ class DetectFrame(ttk.Frame):
 
     def _image_frame(self):
         img_frm = ttk.Frame(self)
-        input_frm = ttk.Frame(img_frm)
-        output_cnt_frm = ttk.Frame(img_frm)
-        output_grn_frm = ttk.Frame(img_frm)
-        self.input_frm = ImageFrame(input_frm)
+        self.input_frm = ImageFrame(img_frm)
         img = Image.open('src/arrow.png')
         img = img.resize((48,48))
         self.img = ImageTk.PhotoImage(img)
         space_frm = ttk.Frame(img_frm, height=30)
-        arrow = tk.Label(img_frm, image=self.img)
-        self.output_cnt_frm = ImageFrame(output_cnt_frm, out=True)
-        self.output_green_frm = ImageFrame(output_grn_frm, out=True)
+        self.arrow = tk.Label(img_frm, image=self.img, textvariable=self.progress_var, compound='center', font=('Calibri', 14))
+        self.output_cnt_frm = ImageFrame(img_frm, out=True)
+        self.output_grn_frm = ImageFrame(img_frm, out=True)
         img_frm.grid_columnconfigure(0, weight=1)
         img_frm.grid_rowconfigure(0, weight=1)
         img_frm.grid_rowconfigure(3, weight=1)
-        #img_frm.grid_rowconfigure(3, weight=1)
-        input_frm.grid(row=0, column=0, sticky='NSEW')
+        self.input_frm.grid(row=0, column=0, sticky='NSEW')
         space_frm.grid(row=1, column=0)
-        arrow.grid(row=2, column=0)
-        output_cnt_frm.grid(row=3, column=0, sticky='NSEW')
-        output_grn_frm.grid(row=3, column=0, sticky='NSEW')
-        #self.output_green_frm.grid(row=3, column=0, sticky='NSEW')
-        output_cnt_frm.tkraise()
+        self.arrow.grid(row=2, column=0)
+        self.output_cnt_frm.grid(row=3, column=0, sticky='NSEW')
+        self.output_grn_frm.grid(row=3, column=0, sticky='NSEW')
+        self.output_grn_frm.grid(row=3, column=0, sticky='NSEW')
+        self.output_cnt_frm.tkraise()
         self.input_frm.propagate(0)
         self.output_cnt_frm.propagate(0)
-        self.input_frm.pack(fill='both', expand=True)
-        self.output_cnt_frm.pack(fill='both', expand=True)
-        self.output_green_frm.pack(fill='both', expand=True)
+        self.output_grn_frm.propagate(0)
         return img_frm
     
     def _set_style(self):
@@ -132,34 +134,40 @@ class DetectFrame(ttk.Frame):
         self.explain_cnt_lbl = ttk.Label(self.cnt_frm, padding=5, style='lbl.TLabel',text='Detects contours from an image. If it does not work well, adjust the threshold value.')
         #img = Image.open('src/cnts.png')
         #self.cnts_img = ImageTk.PhotoImage(img)
-        ex_img = tk.Label(self.cnt_frm,  height=15, width=50, bg='red')
-        thresh_img = tk.Label(self.cnt_frm, height=5, width=50, bg='blue')
+        ex_img = tk.Frame(self.cnt_frm,  height=200, width=400, bg='red')
+        self.thresh_img = tk.Label(self.cnt_frm)
+        self._thresh_bar()
         thresh_frm = tk.Frame(self.cnt_frm, height=50, width=80)
         thresh_frm.propagate(0)
         thresh_box = tk.Spinbox(thresh_frm, from_=0, to=255, increment=1, width=4, font=('Calibri', 14), textvariable=self.thresh)
+        reset_btn = ttk.Button(self.cnt_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
         self.explain_cnt_lbl.pack()
         ex_img.pack()
-        thresh_img.pack()
+        self.thresh_img.pack()
         thresh_frm.pack()
         thresh_box.pack(fill='y', expand=True)
+        reset_btn.pack(side='right')
         return self.cnt_frm
     
     def _green_method_frame(self, master):
         self.grn_frm = ttk.Frame(master, relief='groove', borderwidth=5)
         self.explain_grn_lbl = ttk.Label(self.grn_frm, padding=5, style='lbl.TLabel', text='Extract the green range. Adjust the value to set the range of colors to be extracted.')
-        ex_img =tk.Label(self.grn_frm, height=15, width=50, bg='blue')
-        range_img = tk.Label(self.grn_frm, height=5, width=50, bg='green')
+        ex_img =tk.Frame(self.grn_frm, height=200, width=400, bg='blue')
+        self.range_img = tk.Label(self.grn_frm)
+        self._hue_bar()
         range_frm = tk.Frame(self.grn_frm)
         min_h_box = tk.Spinbox(range_frm, from_=0, to=180, increment=1, width=4, font=('Calibri', 14), textvariable=self.min_h)
         max_h_box = tk.Spinbox(range_frm, from_=0, to=180, increment=1, width=4, font=('Calibri', 14), textvariable=self.max_h)
         dash = ttk.Label(range_frm, text='~', style='lbl.TLabel', padding=5)
+        reset_btn = ttk.Button(self.grn_frm, text='Reset', command=self._reset_hue, style='btn.TButton')
         self.explain_grn_lbl.pack()
         ex_img.pack()
-        range_img.pack()
+        self.range_img.pack()
         range_frm.pack()
         min_h_box.pack(side='left', fill='y')
         dash.pack(side='left')
         max_h_box.pack(side='left', fill='y')
+        reset_btn.pack()
         return self.grn_frm
     
     def _new_line(self, event):
@@ -173,29 +181,115 @@ class DetectFrame(ttk.Frame):
             self.output_cnt_frm.tkraise()
         else:
             self.grn_frm.tkraise()
-            self.output_green_frm.tkraise()
+            self.output_grn_frm.tkraise()
+
+    def _reset_thresh(self):
+        self.thresh.set(self.def_thresh)
+
+    def _reset_hue(self):
+        self.min_h.set(self.def_min_h)
+        self.max_h.set(self.def_max_h)
 
     def _run(self):
-        thresh = int(self.thresh.get())
-        min_hsv = self.d.hsv_min
-        min_hsv[0] = int(self.min_h.get())
-        max_hsv = self.d.hsv_max
-        max_hsv[0] = int(self.max_h.get())
-        self.d.set_param(bin_thr=thresh, hsv_max=max_hsv, hsv_min=min_hsv)
         path = self.input_frm.get_path()
         try:
             if self.method.get() == 'Detect contours':
-                self.res_cnt, main_obj = self.d.extr_leaf(path)
+                if self.thresh.get() == '':
+                    self.thresh.set(0)
+                thresh = int(self.thresh.get())
+                self.d.set_param(bin_thr=thresh)
+                self.progress_var.set('Detecting contours...')
+                self.arrow.update()
+                self.res_cnt, self.main_obj = self.d.extr_leaf(path)
                 img = cv2.cvtColor(self.res_cnt, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
                 self.output_cnt_frm.set(img)
-                print('contours daze!')
             elif self.method.get() == 'Extract Green area':
-                print('Green dayo')
+                if self.min_h.get() == '':
+                    self.min_h.set(0)
+                if self.max_h.get() == '':
+                    self.max_h.set(0)
+                if int(self.min_h.get()) > int(self.max_h.get()):
+                    print('gyaku gyaku')
+                    min = int(self.max_h.get())
+                    max = int(self.min_h.get())
+                else:
+                    min = int(self.min_h.get())
+                    max = int(self.max_h.get())
+                min_hsv = self.d.hsv_min
+                min_hsv[0] = min
+                max_hsv = self.d.hsv_max
+                max_hsv[0] = max
+                print('settei atai', min_hsv, max_hsv)
+                self.d.set_param(hsv_min=min_hsv, hsv_max=max_hsv)
+                self.progress_var.set('Extracting a specified color range...')
+                self.arrow.update()
+                self.res_cnt, self.main_obj = self.d.extr_green(path)
+                img = cv2.cvtColor(self.res_cnt, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(img)
+                self.output_grn_frm.set(img)
             else:
                 messagebox.showerror('Method Error', 'Could not recognize the method. Please select again.')
         except (TypeError, ValueError) as e:
+            if self.method.get() == 'Detect contours':
+                self.output_cnt_frm.clear()
+            elif self.method.get() == 'Extract Green area':
+                self.output_grn_frm.clear()
             messagebox.showerror('Error', e)
+        self.progress_var.set('')
+
+    def _hue_bar(self, *args):
+        if self.max_h.get() == '' or self.min_h.get() == '':
+            return
+        if int(self.min_h.get()) > 180:
+            self.min_h.set(180)
+        if int(self.min_h.get()) < 0:
+            self.min_h.set(0)
+        if int(self.max_h.get()) > 180:
+            self.max_h.set(180)
+        if int(self.max_h.get()) < 0:
+            self.max_h.set(0)
+        low = [int(self.min_h.get()), 50, 50]
+        high = [int(self.max_h.get()), 255,200]
+        height = 70
+        width = 450
+        img = np.zeros((height, width, 3), np.uint8)
+        h = np.linspace(low[0], high[0], width)
+        s = np.linspace(low[1], high[1], height)
+        v = np.linspace(low[2], high[2], height)
+        for i in range(width):
+            for j in range(height):
+                img[j,i,0] = h[i]
+                img[j,i,1] = s[j]
+                img[j,i,2] = v[j]
+        img = cv2.cvtColor(img, cv2.COLOR_HSV2RGB)
+        img = Image.fromarray(img)
+        self.hue_img = ImageTk.PhotoImage(img)
+        self.range_img.configure(image=self.hue_img)
+
+    def _thresh_bar(self, *args):
+        if self.thresh.get() == '':
+            return
+        if int(self.thresh.get()) > 255:
+            self.thresh.set(255)
+        elif int(self.thresh.get()) < 0:
+            self.thresh.set(0)
+        low = int(self.thresh.get())
+        high = 255
+        height = 70
+        width = 450
+        img = np.zeros((height, width, 1), np.uint8)
+        thresh = np.linspace(low, high, width)
+        for i in range(width):
+            for j in range(height):
+                img[j,i,0] = thresh[i]
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        img = Image.fromarray(img)
+        self.thresh_bar_img = ImageTk.PhotoImage(img)
+        self.thresh_img.configure(image=self.thresh_bar_img)
+
+    def _resize_img(self, event):
+        pass
 
 
 class FvFmFrame(ttk.Frame):
@@ -216,6 +310,7 @@ class ImageFrame(ttk.Frame):
     def __init__(self, master, out=False):
         super().__init__(master)
         self.path = ''
+        self.img = None
         lbl_frm = ttk.Frame(self, height=30)
         lbl_frm.propagate(0)
         self.img_area = tk.Label(self, relief='groove')
@@ -255,6 +350,8 @@ class ImageFrame(ttk.Frame):
         self._resize_img(frm_width, frm_height)
 
     def _resize_img(self, new_width, new_height):
+        if self.img is None:
+            return
         new_ratio = new_height / new_width
         if self.ratio == 0:
             return
@@ -283,6 +380,11 @@ class ImageFrame(ttk.Frame):
         frm_width = self.img_area.winfo_width()
         frm_height = self.img_area.winfo_height()
         self._resize_img(frm_width, frm_height)
+
+    def clear(self):
+        print('clear')
+        self.img = None
+        self.img_resized = None
 
 # GUI module
 class ScrollList(tk.Canvas):
