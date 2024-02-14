@@ -98,10 +98,10 @@ class DetectFrame(ttk.Frame):
         return img_frm
     
     def _set_style(self):
-        self.style = ttk.Style()
-        self.style.theme_use('classic')
-        self.style.configure('btn.TButton', font=('Calibri', 16))
-        self.style.configure('lbl.TLabel', font=('Calibri', 14))
+        style = ttk.Style()
+        style.theme_use('classic')
+        style.configure('btn.TButton', font=('Calibri', 16))
+        style.configure('lbl.TLabel', font=('Calibri', 14))
 
     def _method_frame(self):
         method_frm = ttk.Frame(self)
@@ -126,7 +126,7 @@ class DetectFrame(ttk.Frame):
         grn_frm.grid(row=2, column=0, sticky='NSEW')
         run_btn.grid(row=3, column=0)
         next_btn.grid(row=4, column=0, sticky='E')
-        #cnt_frm.tkraise()
+        cnt_frm.tkraise()
         return method_frm
     
     def _contour_method_frame(self, master):
@@ -135,19 +135,27 @@ class DetectFrame(ttk.Frame):
         #img = Image.open('src/cnts.png')
         #self.cnts_img = ImageTk.PhotoImage(img)
         ex_img = tk.Frame(self.cnt_frm,  height=200, width=450, bg='red')
-        self.thresh_img = tk.Label(self.cnt_frm)
+        setting_frm = tk.Frame(self.cnt_frm)
+        thresh_lbl = ttk.Label(setting_frm, text='Threshold', style='lbl.TLabel')
+        self.thresh_img = tk.Label(setting_frm)
         self._thresh_bar()
-        thresh_frm = tk.Frame(self.cnt_frm, height=50, width=80, bg='blue')
+        thresh_frm = tk.Frame(setting_frm, height=50, width=80)
         thresh_frm.propagate(0)
         thresh_box = tk.Spinbox(thresh_frm, from_=0, to=255, increment=1, width=4, font=('Calibri', 14), textvariable=self.thresh)
-        reset_frm = tk.Frame(self.cnt_frm, width=450, height=50)
+        reset_frm = tk.Frame(setting_frm, width=450, height=50)
         reset_btn = ttk.Button(reset_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
         self.cnt_frm.grid_columnconfigure(0, weight=1)
+        self.cnt_frm.grid_rowconfigure(0, weight=1)
+        self.cnt_frm.grid_rowconfigure(1, weight=1)
+        self.cnt_frm.grid_rowconfigure(2, weight=1)
+        self.cnt_frm.grid_rowconfigure(3, weight=1)
         self.explain_cnt_lbl.grid(row=0, column=0)
         ex_img.grid(row=1, column=0)
-        self.thresh_img.grid(row=2, column=0)
-        reset_frm.grid(row=3, column=0)
-        thresh_frm.grid(row=3, column=0)
+        setting_frm.grid(row=2, column=0)
+        thresh_lbl.grid(row=0, column=0)
+        self.thresh_img.grid(row=1, column=0)
+        reset_frm.grid(row=2, column=0)
+        thresh_frm.grid(row=2, column=0)
         reset_frm.pack_propagate(0)
         thresh_box.pack(fill='y', expand=True)
         reset_btn.pack(side='right')
@@ -313,6 +321,84 @@ class DetectFrame(ttk.Frame):
 class FvFmFrame(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
+        self._set_var()
+        self._set_style()
+        self._create()
+
+    def _set_var(self):
+        self.input_frm = None
+        self.arrow = None
+        self.output_frm = None
+        self.arrow_img = None
+        self.progress_msg = tk.StringVar()
+        self.list_frm = None
+        self.fvfm_val_list = None
+        self.fvfm_img_lsit = None
+
+    def _set_style(self):
+        style = ttk.Style()
+        style.theme_use('classic')
+        style.configure('lbl.TLabel', font=('Calibri', 16))
+
+    def _create(self):
+        img_frm = self._image_frame()
+        list_frm = self._value_list_frame()
+
+    def _image_frame(self):
+        # <Widgets> ------------------------------
+        frm = ttk.Frame(self)
+        self.input_frm = ImageFrame(frm)
+        space_frm = ttk.Frame(frm, height=30)
+        self.arrow = tk.Label(frm)
+        self.output_frm = ImageFrame(frm, out=True)
+        # </Widgets> ------------------------------
+        # <Configure> -----------------------------
+        # arrow
+        img = Image.open('src/arrow.png')
+        img = img.resize((48,48))
+        self.arrow_img = ImageTk.PhotoImage(img)
+        self.arrow.configure(
+            image=self.arrow_img, 
+            textvariable=self.progress_msg, 
+            compound='center', 
+            font=('Calibri', 14)
+            )
+        # <Layouts> -------------------------------
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_rowconfigure(0, weight=1)
+        frm.grid_rowconfigure(3, weight=1)
+        self.input_frm.grid(column=0, row=0, sticky='NSEW')
+        space_frm.grid(column=0, row=1)
+        self.arrow.grid(column=0, row=2)
+        self.output_frm.grid(column=0, row=3, sticky='NSEW')
+        self.input_frm.propagate(0)
+        self.output_frm.propagate(0)
+        # </Layouts> ------------------------------
+        return frm
+
+    def _value_list_frame(self):
+        # <Widgets> ------------------------------
+        frm = ttk.Frame(self)
+        title_lbl = ttk.Label(frm)
+        list_frm = ttk.Frame(frm)
+        self.list_frm = ScrollList(list_frm)
+        # </Widgets> -----------------------------
+
+        # <Configure> ----------------------------
+        title_lbl.configure(
+            text='Fv/Fm value list',
+            style='lbl.TLabel'
+            )
+        # </Configure> ---------------------------
+
+        # <Layouts> ------------------------------
+        title_lbl.pack()
+        list_frm.pack(fill='both', expand=True)
+        # </Layouts> -----------------------------
+        return frm
+
+    def _method_frame(self):
+        pass
 
 class ArrangeFrame(ttk.Frame):
     def __init__(self, master):
@@ -408,6 +494,52 @@ class ImageFrame(ttk.Frame):
 class ScrollList(tk.Canvas):
     def __init__(self, master):
         super().__init__(master)
+        self._set_style()
+        self._create()
+
+    def _set_style(self):
+        style = ttk.Style()
+        style.theme_use('classic')
+        style.configure('lbl.TLabel', font=('Calibri', 14))
+
+    def _create(self):
+        # <Widgets> -------------------------------
+        self.frame = ttk.Frame(self)
+        scroll_bar = ttk.Scrollbar(self)
+        # </Widgets> ------------------------------
+
+        # <Configure> -----------------------------
+        # self
+        self.configure(
+            scrollregion=(0,0,0,0),
+            yscrollcommand=scroll_bar.set
+        )
+        self.create_window((0,0), window=self.frame, anchor='NW')
+        # frame
+        self.frame.bind('<Configure>', self._set_scrollregion)
+        # </Configure> ----------------------------
+
+        # <Layouts> -------------------------------
+        self.pack(fill='both', expand=True)
+        scroll_bar.pack(side='right', fill='y')
+        # </Layouts> ------------------------------
+
+    def set_list(self, img_list, val_list):
+        if len(img_list) != len(val_list):
+            raise ValueError('The length of the list is incorrect.')
+        for (img, val) in zip(img_list, val_list):
+            lbl = ttk.Label(
+                self.frame, 
+                text=val,
+                image=img,
+                compound='left',
+                style='lbl.TLabel'
+                )
+            lbl.pack(fill='x', expand=True)
+
+    def _set_scrollregion(self, event):
+        height = self.frame.winfo_height()
+        self.configure(scrollregion=(0,0,0,height))
 
 # GUI module
 class DropFolderFrame(ttk.Frame):
