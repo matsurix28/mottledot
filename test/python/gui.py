@@ -16,7 +16,7 @@ class Application():
     def __init__(self) -> None:
         self.root = dnd2.Tk()
         self.root.geometry('1280x720')
-        self.root.minsize()
+        self.root.wm_minsize(600, 400)
         self.root.title('Pickcell Color')
         self.main_frm = MainFrame(self.root)
 
