@@ -15,8 +15,8 @@ def main():
 class Application():
     def __init__(self) -> None:
         self.root = dnd2.Tk()
-        self.root.geometry('1280x720')
-        self.root.wm_minsize(600, 400)
+        self.root.geometry('1000x700')
+        self.root.wm_minsize(1080, 700)
         self.root.title('Pickcell Color')
         self.main_frm = MainFrame(self.root)
 
@@ -100,8 +100,8 @@ class DetectFrame(ttk.Frame):
     def _set_style(self):
         self.style = ttk.Style()
         self.style.theme_use('classic')
-        self.style.configure('btn.TButton', font=('Calibri', 20))
-        self.style.configure('lbl.TLabel', font=('Calibri', 16))
+        self.style.configure('btn.TButton', font=('Calibri', 16))
+        self.style.configure('lbl.TLabel', font=('Calibri', 14))
 
     def _method_frame(self):
         method_frm = ttk.Frame(self)
@@ -131,28 +131,39 @@ class DetectFrame(ttk.Frame):
     
     def _contour_method_frame(self, master):
         self.cnt_frm = ttk.Frame(master, relief='groove', borderwidth=5)
-        self.explain_cnt_lbl = ttk.Label(self.cnt_frm, padding=5, style='lbl.TLabel',text='Detects contours from an image. If it does not work well, adjust the threshold value.')
+        self.explain_cnt_lbl = ttk.Label(self.cnt_frm, padding=5, style='lbl.TLabel',text='Detects contours from an image. If it does not work well, adjust the threshold value. (Threshold range is 0-255)')
         #img = Image.open('src/cnts.png')
         #self.cnts_img = ImageTk.PhotoImage(img)
-        ex_img = tk.Frame(self.cnt_frm,  height=200, width=400, bg='red')
+        ex_img = tk.Frame(self.cnt_frm,  height=200, width=450, bg='red')
         self.thresh_img = tk.Label(self.cnt_frm)
         self._thresh_bar()
         thresh_frm = tk.Frame(self.cnt_frm, height=50, width=80)
         thresh_frm.propagate(0)
         thresh_box = tk.Spinbox(thresh_frm, from_=0, to=255, increment=1, width=4, font=('Calibri', 14), textvariable=self.thresh)
-        reset_btn = ttk.Button(self.cnt_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
-        self.explain_cnt_lbl.pack()
-        ex_img.pack()
-        self.thresh_img.pack()
-        thresh_frm.pack()
+        reset_frm = tk.Frame(self.cnt_frm, width=450, height=50)
+        reset_btn = ttk.Button(reset_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
+        #self.explain_cnt_lbl.pack()
+        #ex_img.pack()
+        #self.thresh_img.pack()
+        #thresh_frm.pack()
+        #thresh_box.pack(fill='y', expand=True)
+        #reset_btn.pack(side='right')
+        self.explain_cnt_lbl.grid(row=0, column=0)
+        ex_img.grid(row=1, column=0)
+        self.thresh_img.grid(row=2, column=0)
+        reset_frm.grid(row=3, column=0)
+        thresh_frm.grid(row=3, column=0)
+        reset_frm.pack_propagate(0)
+        #thresh_box.grid(row=0, column=0, sticky=c)
         thresh_box.pack(fill='y', expand=True)
         reset_btn.pack(side='right')
+        thresh_frm.tkraise()
         return self.cnt_frm
     
     def _green_method_frame(self, master):
         self.grn_frm = ttk.Frame(master, relief='groove', borderwidth=5)
         self.explain_grn_lbl = ttk.Label(self.grn_frm, padding=5, style='lbl.TLabel', text='Extract the green range. Adjust the value to set the range of colors to be extracted.')
-        ex_img =tk.Frame(self.grn_frm, height=200, width=400, bg='blue')
+        ex_img =tk.Frame(self.grn_frm, height=200, width=450, bg='blue')
         self.range_img = tk.Label(self.grn_frm)
         self._hue_bar()
         range_frm = tk.Frame(self.grn_frm)
