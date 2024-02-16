@@ -536,6 +536,11 @@ class ScrollList(tk.Canvas):
             scrollregion=(0,0,0,0),
             yscrollcommand=scroll_bar.set
         )
+        # scroll_bar
+        scroll_bar.configure(
+            orient='vertical',
+            command=self.yview
+        )
         #self.create_window()
         self.create_window((0,0), window=self.frame, anchor='nw')
         # frame
@@ -544,6 +549,7 @@ class ScrollList(tk.Canvas):
         # <Layouts> -------------------------------
         self.pack(fill='both', expand=True)
         scroll_bar.pack(side='right', fill='y')
+        self.pack_propagate(0)
         # </Layouts> ------------------------------
 
     def set_list(self, img_list, val_list):
