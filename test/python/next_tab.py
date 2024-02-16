@@ -10,6 +10,10 @@ class Application():
     def __init__(self) -> None:
         pass
 
+class DetectFrame(WorkFrame):
+    def __init__(self, master):
+        super()
+
 class WorkFrame(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
@@ -21,6 +25,10 @@ class WorkFrame(ttk.Frame):
     def notify_observer(self) -> None:
         for o in self.__observers:
             o.update(self)
+
+    @abstractmethod
+    def _next(self):
+        raise NotImplementedError
 
 class Observer(ABC):
     @abstractmethod
