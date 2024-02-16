@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import tkinterdnd2 as dnd2
 from detect import Detect
+from fvfm import Fvfm
 from PIL import Image, ImageTk
 
 
@@ -20,19 +21,28 @@ class Application():
         self.root.title('Pickcell Color')
         self.main_frm = MainFrame(self.root)
 
+    def _set_vars(self):
+        self.grn_path = None
+        self.fvfm_path = None
+        self.main_obj = None
+
     def start(self):
-        detect_frm = DetectFrame(self.root)
-        self.main_frm.add_tab(detect_frm, 'Detect leaf')
-        fvfm_frm = FvFmFrame(self.root)
-        self.main_frm.add_tab(fvfm_frm, 'Fv/Fm value')
-        arrange_frm = ArrangeFrame(self.root)
-        self.main_frm.add_tab(arrange_frm, 'Arrange')
-        result_frm = ResultFrame(self.root)
-        self.main_frm.add_tab(result_frm, 'Result')
+        self.detect_frm = DetectFrame(self.root, self)
+        self.main_frm.add_tab(self.detect_frm, 'Detect leaf')
+        self.fvfm_frm = FvFmFrame(self.root)
+        self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
+        self.arrange_frm = ArrangeFrame(self.root)
+        self.main_frm.add_tab(self.arrange_frm, 'Arrange')
+        self.result_frm = ResultFrame(self.root)
+        self.main_frm.add_tab(self.result_frm, 'Result')
         self.root.mainloop()
 
     def test_add(self, frame, title):
         self.main_frm.add_tab(frame, title)
+
+    def d2f(self):
+        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
+        self.main_frm.notebook.select(self.fvfm_frm)
 
 class MainFrame(ttk.Frame):
     def __init__(self, master):
@@ -45,9 +55,24 @@ class MainFrame(ttk.Frame):
         self.notebook.add(frame, text=title)
 
 class DetectFrame(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, app):
         super().__init__(master, relief='groove', borderwidth=10)
+        self.app = app
         self.d = Detect()
+        self._set_vars()
+        self._set_style()
+        img_frm = self._image_frame()
+        method_frm = self._method_frame()
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        img_frm.grid_propagate(0)
+        method_frm.grid_propagate(0)
+        img_frm.grid(row=0, column=0, sticky='NSEW')
+        method_frm.grid(row=0, column=1, sticky='NSEW')
+
+    def _set_vars(self):
+        self.path = None
         self.def_min_h = self.d.hsv_min[0]
         self.def_max_h = self.d.hsv_max[0]
         self.def_thresh = self.d.bin_thr
@@ -61,16 +86,8 @@ class DetectFrame(ttk.Frame):
         self.max_h.set(self.def_max_h)
         self.max_h.trace('w', self._hue_bar)
         self.progress_var = tk.StringVar()
-        self._set_style()
-        img_frm = self._image_frame()
-        method_frm = self._method_frame()
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-        img_frm.grid_propagate(0)
-        method_frm.grid_propagate(0)
-        img_frm.grid(row=0, column=0, sticky='NSEW')
-        method_frm.grid(row=0, column=1, sticky='NSEW')
+        self.res_img = None
+        self.main_obj = None
 
     def _image_frame(self):
         img_frm = ttk.Frame(self)
@@ -117,7 +134,7 @@ class DetectFrame(ttk.Frame):
         cnt_frm = self._contour_method_frame(method_frm)
         grn_frm = self._green_method_frame(method_frm)
         run_btn = ttk.Button(method_frm, text='RUN', padding=5, style='btn.TButton', command=self._run)
-        next_btn = ttk.Button(method_frm, text='Next→', style='btn.TButton')
+        next_btn = ttk.Button(method_frm, text='Next→', style='btn.TButton', command=self._next)
         method_frm.grid_columnconfigure(0, weight=1)
         method_frm.grid_rowconfigure(2, weight=1)
         method_lbl.grid(row=0, column=0)
@@ -129,6 +146,9 @@ class DetectFrame(ttk.Frame):
         cnt_frm.tkraise()
         return method_frm
     
+    def get(self):
+        return self.path, self.res_img, self.main_obj
+
     def _contour_method_frame(self, master):
         self.cnt_frm = ttk.Frame(master, relief='groove', borderwidth=5)
         self.explain_cnt_lbl = ttk.Label(self.cnt_frm, padding=5, style='lbl.TLabel',text='Detects contours from an image. If it does not work well, adjust the threshold value. (Threshold range is 0-255)')
@@ -143,7 +163,7 @@ class DetectFrame(ttk.Frame):
         thresh_frm.propagate(0)
         thresh_box = tk.Spinbox(thresh_frm, from_=0, to=255, increment=1, width=4, font=('Calibri', 14), textvariable=self.thresh)
         reset_frm = tk.Frame(setting_frm, width=450, height=50)
-        reset_btn = ttk.Button(reset_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
+        reset_btn = ttk.Button(setting_frm, text='Reset', command=self._reset_thresh, style='btn.TButton')
         self.cnt_frm.grid_columnconfigure(0, weight=1)
         self.cnt_frm.grid_rowconfigure(0, weight=1)
         self.cnt_frm.grid_rowconfigure(1, weight=1)
@@ -154,11 +174,12 @@ class DetectFrame(ttk.Frame):
         setting_frm.grid(row=2, column=0)
         thresh_lbl.grid(row=0, column=0)
         self.thresh_img.grid(row=1, column=0)
-        reset_frm.grid(row=2, column=0)
+        #reset_frm.grid(row=2, column=0)
         thresh_frm.grid(row=2, column=0)
-        reset_frm.pack_propagate(0)
+        #reset_frm.pack_propagate(0)
         thresh_box.pack(fill='y', expand=True)
-        reset_btn.pack(side='right')
+        #reset_btn.pack(side='right')
+        reset_btn.grid(row=2, column=0, sticky='E')
         thresh_frm.tkraise()
         return self.cnt_frm
     
@@ -217,7 +238,7 @@ class DetectFrame(ttk.Frame):
         self.max_h.set(self.def_max_h)
 
     def _run(self):
-        path = self.input_frm.get_path()
+        self.path = self.input_frm.get_path()
         try:
             if self.method.get() == 'Detect contours':
                 if self.thresh.get() == '':
@@ -226,8 +247,8 @@ class DetectFrame(ttk.Frame):
                 self.d.set_param(bin_thr=thresh)
                 self.progress_var.set('Detecting contours...')
                 self.arrow.update()
-                self.res_cnt, self.main_obj = self.d.extr_leaf(path)
-                img = cv2.cvtColor(self.res_cnt, cv2.COLOR_BGR2RGB)
+                self.res_img, self.main_obj = self.d.extr_leaf(self.path)
+                img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
                 self.output_cnt_frm.set(img)
             elif self.method.get() == 'Extract Green area':
@@ -250,8 +271,8 @@ class DetectFrame(ttk.Frame):
                 self.d.set_param(hsv_min=min_hsv, hsv_max=max_hsv)
                 self.progress_var.set('Extracting a specified color range...')
                 self.arrow.update()
-                self.res_cnt, self.main_obj = self.d.extr_green(path)
-                img = cv2.cvtColor(self.res_cnt, cv2.COLOR_BGR2RGB)
+                self.res_img, self.main_obj = self.d.extr_green(self.path)
+                img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
                 self.output_grn_frm.set(img)
             else:
@@ -303,7 +324,7 @@ class DetectFrame(ttk.Frame):
         low = int(self.thresh.get())
         high = 255
         height = 70
-        width = 450
+        width = 400
         img = np.zeros((height, width, 1), np.uint8)
         thresh = np.linspace(low, high, width)
         for i in range(width):
@@ -314,16 +335,26 @@ class DetectFrame(ttk.Frame):
         self.thresh_bar_img = ImageTk.PhotoImage(img)
         self.thresh_img.configure(image=self.thresh_bar_img)
 
-    def _resize_img(self, event):
-        pass
-
+    def _next(self):
+        if (self.path is not None) and (self.res_img is not None) and (self.main_obj is not None):
+            self.app.d2f()
 
 class FvFmFrame(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
+        self.d = Detect()
+        #self.f = Fvfm()
         self._set_var()
+        self._set_str()
         self._set_style()
         self._create_widgets()
+
+    def _set_str(self):
+        self.explain_msg = (
+            'Reads the Fv/Fm scale bar from an image and creates '
+            'its value and color correspondence table. Also, extract '
+            'only the leaf area from an image.'
+        )
 
     def _set_var(self):
         self.input_frm = None
@@ -334,6 +365,9 @@ class FvFmFrame(ttk.Frame):
         self.list_frm = None
         self.fvfm_val_list = None
         self.fvfm_img_lsit = None
+        self.def_thresh = self.d.bin_thr
+        self.thresh = tk.StringVar()
+        self.thresh.set(self.def_thresh)
 
     def _set_style(self):
         style = ttk.Style()
@@ -343,15 +377,14 @@ class FvFmFrame(ttk.Frame):
     def _create_widgets(self):
         img_frm = self._image_frame()
         list_frm = self._value_list_frame()
+        method_frm = self._method_frame()
         img_frm.grid(column=0, row=0, sticky='NSEW')
         list_frm.grid(column=1, row=0, sticky='NSEW')
-        self.grid_columnconfigure(0, weight=1)
+        method_frm.grid(column=2, row=0, sticky='NSEW')
+        self.grid_columnconfigure(0, weight=2)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=2)
         self.grid_rowconfigure(0, weight=1)
-        img_frm.pack_propagate(0)
-        list_frm.pack_propagate(0)
-        self.grid_propagate(0)
-        self.propagate(0)
 
     def _image_frame(self):
         # <Widgets> ------------------------------
@@ -393,18 +426,16 @@ class FvFmFrame(ttk.Frame):
         list_frm = ttk.Frame(frm)
         self.list_frm = ScrollList(list_frm)
         # </Widgets> -----------------------------
-
         # <Configure> ----------------------------
         title_lbl.configure(
             text='Fv/Fm value list',
             style='lbl.TLabel'
             )
         # </Configure> ---------------------------
-
         # <Layouts> ------------------------------
         title_lbl.pack()
         list_frm.pack(fill='both', expand=True)
-        frm.grid_propagate(0)
+        frm.pack_propagate(0)
         # </Layouts> -----------------------------
         self.test()
         return frm
@@ -421,6 +452,105 @@ class FvFmFrame(ttk.Frame):
         self.list_frm.set_list(self.imgs, val)
 
     def _method_frame(self):
+        # <Widgets> -------------------------------
+        frm = tk.Frame(self)
+        title_lbl = ttk.Label(frm)
+        explain_txt = ttk.Label(frm)
+        ex_img = tk.Frame(frm, width=400, height=200, bg='red')
+        settings_frm = ttk.Frame(frm)
+        thresh_lbl = ttk.Label(settings_frm)
+        self.thresh_img = tk.Label(settings_frm)
+        thresh_frm = tk.Frame(settings_frm)
+        thresh_spinbox = tk.Spinbox(thresh_frm)
+        reset_btn = ttk.Button(settings_frm)
+        btn_frm = ttk.Frame(frm)
+        run_btn = ttk.Button(btn_frm)
+        next_btn = ttk.Button(btn_frm)
+        # </Widget> -------------------------------
+        # <Configure> -----------------------------
+        title_lbl.configure(
+            text='Method', 
+            style='lbl.TLabel'
+            )
+        explain_txt.configure(text=self.explain_msg, style='lbl.TLabel')
+        thresh_lbl.configure(text='Threshold', state='lbl.TLabel')
+        self._thresh_bar()
+        thresh_frm.configure(height=50, width=80)
+        thresh_spinbox.configure(
+            from_=0, to=255, increment=1, 
+            width=4, 
+            font=('Calibri', 14), 
+            textvariable=self.thresh
+        )
+        reset_btn.configure(
+            text='Reset', 
+            style='btn.TButton', 
+            command=self._reset_thr
+            )
+        run_btn.configure(
+            text='RUN',
+            style='btn.TButton',
+            command=self._run
+        )
+        next_btn.configure(
+            text='NEXT',
+            style='btn.TButton',
+            command=self._next
+        )
+        # </Configure> ----------------------------
+        # <Layouts> -------------------------------
+        title_lbl.grid(column=0, row=0)
+        explain_txt.grid(column=0, row=1)
+        ex_img.grid(column=0, row=2)
+        settings_frm.grid(column=0, row=3)
+        # Inner settins_frm ------------------->
+        thresh_lbl.grid(column=0, row=0)
+        self.thresh_img.grid(column=0, row=1)
+        thresh_frm.grid(column=0, row=2)
+        # Inner thresh_frm ---------->>
+        thresh_spinbox.pack(fill='y', expand=True)
+        # --------------------------->>
+        # ------------------------------------->>
+        reset_btn.grid(column=0, row=2, sticky='E')
+        btn_frm.grid(column=0, row=4, sticky='SEW')
+        # inner btn_frm ---------->
+        run_btn.pack()
+        next_btn.pack(side='right')
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_rowconfigure(2, weight=1)
+        frm.grid_rowconfigure(3, weight=1)
+        frm.grid_propagate(0)
+        thresh_frm.propagate(0)
+        return frm
+
+    def _reset_thr(self):
+        self.thresh.set(self.def_thresh)
+
+    def _thresh_bar(self, *args):
+        if self.thresh.get() == '':
+            return
+        if int(self.thresh.get()) > 255:
+            self.thresh.set(255)
+        elif int(self.thresh.get()) < 0:
+            self.thresh.set(0)
+        low = int(self.thresh.get())
+        high = 255
+        height = 70
+        width = 400
+        img = np.zeros((height, width, 1), np.uint8)
+        thresh = np.linspace(low, high, width)
+        for i in range(width):
+            for j in range(height):
+                img[j,i,0] = thresh[i]
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        img = Image.fromarray(img)
+        self.thresh_bar_img = ImageTk.PhotoImage(img)
+        self.thresh_img.configure(image=self.thresh_bar_img)
+
+    def _run(self):
+        pass
+
+    def _next(self):
         pass
 
 class ArrangeFrame(ttk.Frame):
