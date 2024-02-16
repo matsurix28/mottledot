@@ -323,7 +323,7 @@ class FvFmFrame(ttk.Frame):
         super().__init__(master)
         self._set_var()
         self._set_style()
-        self._create()
+        self._create_widgets()
 
     def _set_var(self):
         self.input_frm = None
@@ -340,9 +340,18 @@ class FvFmFrame(ttk.Frame):
         style.theme_use('classic')
         style.configure('lbl.TLabel', font=('Calibri', 16))
 
-    def _create(self):
+    def _create_widgets(self):
         img_frm = self._image_frame()
         list_frm = self._value_list_frame()
+        img_frm.grid(column=0, row=0, sticky='NSEW')
+        list_frm.grid(column=1, row=0, sticky='NSEW')
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        img_frm.pack_propagate(0)
+        list_frm.pack_propagate(0)
+        self.grid_propagate(0)
+        self.propagate(0)
 
     def _image_frame(self):
         # <Widgets> ------------------------------
@@ -364,15 +373,16 @@ class FvFmFrame(ttk.Frame):
             font=('Calibri', 14)
             )
         # <Layouts> -------------------------------
-        frm.grid_columnconfigure(0, weight=1)
-        frm.grid_rowconfigure(0, weight=1)
-        frm.grid_rowconfigure(3, weight=1)
         self.input_frm.grid(column=0, row=0, sticky='NSEW')
         space_frm.grid(column=0, row=1)
         self.arrow.grid(column=0, row=2)
         self.output_frm.grid(column=0, row=3, sticky='NSEW')
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_rowconfigure(0, weight=1)
+        frm.grid_rowconfigure(3, weight=1)
         self.input_frm.propagate(0)
         self.output_frm.propagate(0)
+        frm.grid_propagate(0)
         # </Layouts> ------------------------------
         return frm
 
@@ -394,8 +404,21 @@ class FvFmFrame(ttk.Frame):
         # <Layouts> ------------------------------
         title_lbl.pack()
         list_frm.pack(fill='both', expand=True)
+        frm.grid_propagate(0)
         # </Layouts> -----------------------------
+        self.test()
         return frm
+
+    def test(self):
+        iro = [[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119],[0,74,255],[0,136,255], [0,189,255], [28,255,14], [238,255,119]]
+        val = [832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0,832.0, 825.0, 820.0, 800.0, 790.0]
+        self.imgs = []
+        for color in iro:
+            img = np.full((36,36,3), color, np.uint8)
+            img = Image.fromarray(img)
+            img = ImageTk.PhotoImage(img)
+            self.imgs.append(img)
+        self.list_frm.set_list(self.imgs, val)
 
     def _method_frame(self):
         pass
@@ -495,30 +518,29 @@ class ScrollList(tk.Canvas):
     def __init__(self, master):
         super().__init__(master)
         self._set_style()
-        self._create()
+        self._create_widgets()
 
     def _set_style(self):
         style = ttk.Style()
         style.theme_use('classic')
         style.configure('lbl.TLabel', font=('Calibri', 14))
 
-    def _create(self):
+    def _create_widgets(self):
         # <Widgets> -------------------------------
         self.frame = ttk.Frame(self)
         scroll_bar = ttk.Scrollbar(self)
         # </Widgets> ------------------------------
-
         # <Configure> -----------------------------
         # self
         self.configure(
             scrollregion=(0,0,0,0),
             yscrollcommand=scroll_bar.set
         )
-        self.create_window((0,0), window=self.frame, anchor='NW')
+        #self.create_window()
+        self.create_window((0,0), window=self.frame, anchor='nw')
         # frame
         self.frame.bind('<Configure>', self._set_scrollregion)
         # </Configure> ----------------------------
-
         # <Layouts> -------------------------------
         self.pack(fill='both', expand=True)
         scroll_bar.pack(side='right', fill='y')
@@ -539,6 +561,7 @@ class ScrollList(tk.Canvas):
 
     def _set_scrollregion(self, event):
         height = self.frame.winfo_height()
+        print(height)
         self.configure(scrollregion=(0,0,0,height))
 
 # GUI module
