@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 """Read Fv/Fm scale bar."""
 
+import argparse
+import itertools
+import os
+import re
+import statistics
+import sys
+
 import cv2
 import easyocr
-import re
-import itertools
-import statistics
 import numpy as np
-import os
-import sys
-import argparse
+
 
 def main():
     input_path, output_path = args()
@@ -128,7 +130,7 @@ class Fvfm:
         try:
             hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
             h,s,v = cv2.split(hsv)
-            fvfm_list = self.__create_fvfm_list(std_fvfm, scale, bar_area, h)
+            fvfm_list = self.__create_fvfm_list(std_fvfm, scale, bar_area, img)
         except ValueError as e:
             raise
         if output_path is not None:
@@ -150,6 +152,7 @@ class Fvfm:
             fvfm = std_fvfm[1] + i
             pos = int(std_fvfm[0] - (i * scale))
             value = img[pos, center]
+            print(value)
             fvfm_list.append([value.tolist(), fvfm])
         for i in range(1, lower_num + 1):
             fvfm = std_fvfm[1] - i

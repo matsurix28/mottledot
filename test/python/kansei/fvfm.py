@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 """Read Fv/Fm scale bar."""
 
+import argparse
+import itertools
+import os
+import re
+import statistics
+import sys
+
 import cv2
 import easyocr
-import re
-import itertools
-import statistics
 import numpy as np
-import os
-import sys
-import argparse
+
 
 def main():
     input_path, output_path = args()
@@ -137,6 +139,7 @@ class Fvfm:
             fvfm = std_fvfm[1] + i
             pos = int(std_fvfm[0] - (i * scale))
             value = img[pos, center]
+            print(value)
             fvfm_list.append([value.tolist(), fvfm])
         for i in range(1, lower_num + 1):
             fvfm = std_fvfm[1] - i

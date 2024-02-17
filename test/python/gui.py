@@ -27,10 +27,10 @@ class Application():
         self.main_obj = None
 
     def start(self):
-        self.detect_frm = DetectFrame(self.root, self)
-        self.main_frm.add_tab(self.detect_frm, 'Detect leaf')
-        self.fvfm_frm = FvFmFrame(self.root)
-        self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
+        #self.detect_frm = DetectFrame(self.root, self)
+        #self.main_frm.add_tab(self.detect_frm, 'Detect leaf')
+        #self.fvfm_frm = FvFmFrame(self.root, self)
+        #self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
         self.arrange_frm = ArrangeFrame(self.root)
         self.main_frm.add_tab(self.arrange_frm, 'Arrange')
         self.result_frm = ResultFrame(self.root)
@@ -40,9 +40,20 @@ class Application():
     def test_add(self, frame, title):
         self.main_frm.add_tab(frame, title)
 
-    def d2f(self):
-        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
-        self.main_frm.notebook.select(self.fvfm_frm)
+#    def d2f(self):
+#        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
+#        self.main_frm.notebook.select(self.fvfm_frm)
+
+#    def f2a(self):
+#        self.main_frm.notebook.select(self.arrange_frm)
+    
+#    def res_detect(self):
+#        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
+#        self.arrange_frm.set_grn(self.grn_img, self.grn_cnt)
+
+#    def res_fvfm(self):
+#        self.fvfm_path, self.fvfm_img, self.fvfm_cnt, self.fvfm_list = self.fvfm_frm.get()
+#        self.arrange_frm.set_fvfm(self.fvfm_img, self.fvfm_cnt)
 
 class MainFrame(ttk.Frame):
     def __init__(self, master):
@@ -340,10 +351,11 @@ class DetectFrame(ttk.Frame):
             self.app.d2f()
 
 class FvFmFrame(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, app):
         super().__init__(master)
+        self.app = app
         self.d = Detect()
-        #self.f = Fvfm()
+        self.f = Fvfm()
         self._set_var()
         self._set_str()
         self._set_style()
@@ -368,6 +380,7 @@ class FvFmFrame(ttk.Frame):
         self.def_thresh = self.d.bin_thr
         self.thresh = tk.StringVar()
         self.thresh.set(self.def_thresh)
+        self.path = None
 
     def _set_style(self):
         style = ttk.Style()
@@ -437,7 +450,7 @@ class FvFmFrame(ttk.Frame):
         list_frm.pack(fill='both', expand=True)
         frm.pack_propagate(0)
         # </Layouts> -----------------------------
-        self.test()
+        #self.test()
         return frm
 
     def test(self):
@@ -548,14 +561,112 @@ class FvFmFrame(ttk.Frame):
         self.thresh_img.configure(image=self.thresh_bar_img)
 
     def _run(self):
-        pass
+        self.path = self.input_frm.get_path()
+        try:
+            if self.thresh.get() == '':
+                self.thresh.set(0)
+            thresh = int(self.thresh.get())
+            self.d.set_param(bin_thr=thresh)
+            self.progress_msg.set('Read Fv/Fm scale bar and detect leaf...')
+            self.arrow.update()
+            self.res_img, self.res_cnt = self.d.extr_leaf(self.path)
+            img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            self.output_frm.set(img)
+            self.fvfm_list = self.f.get(self.path)
+            self._set_list(self.fvfm_list)
+        except (TypeError, ValueError) as e:
+            self.output_frm.clear()
+            messagebox.showerror('Error', e)
+        self.progress_msg.set('')
+        self.app.res_fvfm()
+
+    def _set_list(self, fvfm_list):
+        value_list = [i[1] for i in fvfm_list]
+        self.color_imgs = []
+        for f in fvfm_list:
+            color = f[0]
+            img = np.full((36,36,3), color, np.uint8)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            img = ImageTk.PhotoImage(img)
+            self.color_imgs.append(img)
+        self.list_frm.set_list(self.color_imgs, value_list)
+
+    def get(self):
+        return self.path, self.res_img, self.res_cnt, self.fvfm_list
 
     def _next(self):
-        pass
+        if (self.path is not None) and (self.res_img is not None) and (self.res_cnt is not None) and (self.fvfm_list is not None):
+            self.app.f2a()
 
 class ArrangeFrame(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
+        self._create_widgets()
+
+    def _set_str(self):
+        pass
+
+    def _set_var(self):
+        self.grn_img = None
+        self.fvfm_img = None
+
+    def set_grn(self, grn_img, grn_cnt):
+        self.grn_img = grn_img
+        self.grn_cnt = grn_cnt
+
+    def set_fvfm(self, fvfm_img, fvfm_cnt):
+        self.fvfm_img = fvfm_img
+        self.fvfm_cnt = fvfm_cnt
+
+    def _set_style(self):
+        style = ttk.Style()
+        style.theme_use('classic')
+        style.configure('lbl.TLabel', font=('Calibri', 16))
+
+    def _create_widgets(self):
+        # <Widgets> -------------------------
+        img_frm = tk.Frame(self, bg='red')
+        grn_frm = self._green_frame(img_frm)
+        fvfm_frm = self._fvfm_frame(img_frm)
+        method_frm = self._method_frame()
+        # </Widgets> ------------------------
+        # <Configure> -----------------------
+        # </Configure> ----------------------
+        # <Layouts> -------------------------
+        img_frm.grid(column=0, row=0, sticky='NSEW')
+        grn_frm.pack()
+        fvfm_frm.pack()
+        method_frm.grid(column=1, row=0, sticky='NSEW')
+        self.grid_columnconfigure(0, weight=2)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+    def _green_frame(self, master):
+        frm = ttk.Frame(master)
+        in_grn_frm = ImageFrame(frm)
+        arrow = ttk.Label(frm)
+        out_grn_frm = ImageFrame(frm, out=True)
+        in_grn_frm.grid(column=0, row=0, sticky='NSEW')
+        arrow.grid(column=1, row=0)
+        out_grn_frm.grid(column=2, row=0, sticky='NSEW')
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_columnconfigure(2, weight=1)
+        frm.grid_propagate(0)
+        return frm
+
+    def _fvfm_frame(self, master):
+        frm = ttk.Frame(master)
+        in_fvfm_frm = ImageFrame(frm)
+        fvfm_arrow = ttk.Label(frm)
+        out_fvfm_frm = ImageFrame(frm, out=True)
+        return frm
+
+    def _method_frame(self):
+        frm = tk.Frame(self, bg='blue')
+        return frm
+
 
 class ResultFrame(ttk.Frame):
     def __init__(self, master):
