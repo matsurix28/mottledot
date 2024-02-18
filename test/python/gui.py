@@ -4,8 +4,10 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 import numpy as np
 import tkinterdnd2 as dnd2
+from arrange import Arrange
 from detect import Detect
 from fvfm import Fvfm
+from pickcell import Pickcell
 from PIL import Image, ImageTk
 
 
@@ -27,11 +29,11 @@ class Application():
         self.main_obj = None
 
     def start(self):
-        #self.detect_frm = DetectFrame(self.root, self)
-        #self.main_frm.add_tab(self.detect_frm, 'Detect leaf')
-        #self.fvfm_frm = FvFmFrame(self.root, self)
-        #self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
-        self.arrange_frm = ArrangeFrame(self.root)
+        self.detect_frm = DetectFrame(self.root, self)
+        self.main_frm.add_tab(self.detect_frm, 'Detect leaf')
+        self.fvfm_frm = FvFmFrame(self.root, self)
+        self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
+        self.arrange_frm = ArrangeFrame(self.root, self)
         self.main_frm.add_tab(self.arrange_frm, 'Arrange')
         self.result_frm = ResultFrame(self.root)
         self.main_frm.add_tab(self.result_frm, 'Result')
@@ -40,20 +42,26 @@ class Application():
     def test_add(self, frame, title):
         self.main_frm.add_tab(frame, title)
 
-#    def d2f(self):
-#        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
-#        self.main_frm.notebook.select(self.fvfm_frm)
+    def d2f(self):
+        self.main_frm.notebook.select(self.fvfm_frm)
 
-#    def f2a(self):
-#        self.main_frm.notebook.select(self.arrange_frm)
+    def f2a(self):
+        self.main_frm.notebook.select(self.arrange_frm)
+
+    def a2r(self):
+        self.main_frm.notebook.select(self.result_frm)
     
-#    def res_detect(self):
-#        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
-#        self.arrange_frm.set_grn(self.grn_img, self.grn_cnt)
+    def res_detect(self):
+        self.grn_path, self.grn_img, self.grn_cnt = self.detect_frm.get()
+        self.arrange_frm.set_grn(self.grn_img, self.grn_cnt)
 
-#    def res_fvfm(self):
-#        self.fvfm_path, self.fvfm_img, self.fvfm_cnt, self.fvfm_list = self.fvfm_frm.get()
-#        self.arrange_frm.set_fvfm(self.fvfm_img, self.fvfm_cnt)
+    def res_fvfm(self):
+        self.fvfm_path, self.fvfm_img, self.fvfm_cnt, self.fvfm_list = self.fvfm_frm.get()
+        self.arrange_frm.set_fvfm(self.fvfm_img, self.fvfm_cnt)
+
+    def res_arrange(self):
+        self.arr_grn_img, self.arr_fvfm_img = self.arrange_frm.get()
+        self.result_frm.set_imgs(self.arr_grn_img, self.arr_fvfm_img)
 
 class MainFrame(ttk.Frame):
     def __init__(self, master):
@@ -261,14 +269,13 @@ class DetectFrame(ttk.Frame):
                 self.res_img, self.main_obj = self.d.extr_leaf(self.path)
                 img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
-                self.output_cnt_frm.set(img)
+                self.output_cnt_frm.set_img(img)
             elif self.method.get() == 'Extract Green area':
                 if self.min_h.get() == '':
                     self.min_h.set(0)
                 if self.max_h.get() == '':
                     self.max_h.set(0)
                 if int(self.min_h.get()) > int(self.max_h.get()):
-                    print('gyaku gyaku')
                     min = int(self.max_h.get())
                     max = int(self.min_h.get())
                 else:
@@ -278,14 +285,13 @@ class DetectFrame(ttk.Frame):
                 min_hsv[0] = min
                 max_hsv = self.d.hsv_max
                 max_hsv[0] = max
-                print('settei atai', min_hsv, max_hsv)
                 self.d.set_param(hsv_min=min_hsv, hsv_max=max_hsv)
                 self.progress_var.set('Extracting a specified color range...')
                 self.arrow.update()
                 self.res_img, self.main_obj = self.d.extr_green(self.path)
                 img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
-                self.output_grn_frm.set(img)
+                self.output_grn_frm.set_img(img)
             else:
                 messagebox.showerror('Method Error', 'Could not recognize the method. Please select again.')
         except (TypeError, ValueError) as e:
@@ -295,6 +301,7 @@ class DetectFrame(ttk.Frame):
                 self.output_grn_frm.clear()
             messagebox.showerror('Error', e)
         self.progress_var.set('')
+        self.app.res_detect()
 
     def _hue_bar(self, *args):
         if self.max_h.get() == '' or self.min_h.get() == '':
@@ -468,7 +475,7 @@ class FvFmFrame(ttk.Frame):
         # <Widgets> -------------------------------
         frm = tk.Frame(self)
         title_lbl = ttk.Label(frm)
-        explain_txt = ttk.Label(frm)
+        self.explain_txt = ttk.Label(frm)
         ex_img = tk.Frame(frm, width=400, height=200, bg='red')
         settings_frm = ttk.Frame(frm)
         thresh_lbl = ttk.Label(settings_frm)
@@ -481,11 +488,12 @@ class FvFmFrame(ttk.Frame):
         next_btn = ttk.Button(btn_frm)
         # </Widget> -------------------------------
         # <Configure> -----------------------------
+        frm.bind('<Configure>', self._new_line)
         title_lbl.configure(
             text='Method', 
             style='lbl.TLabel'
             )
-        explain_txt.configure(text=self.explain_msg, style='lbl.TLabel')
+        self.explain_txt.configure(text=self.explain_msg, style='lbl.TLabel')
         thresh_lbl.configure(text='Threshold', state='lbl.TLabel')
         self._thresh_bar()
         thresh_frm.configure(height=50, width=80)
@@ -513,7 +521,7 @@ class FvFmFrame(ttk.Frame):
         # </Configure> ----------------------------
         # <Layouts> -------------------------------
         title_lbl.grid(column=0, row=0)
-        explain_txt.grid(column=0, row=1)
+        self.explain_txt.grid(column=0, row=1)
         ex_img.grid(column=0, row=2)
         settings_frm.grid(column=0, row=3)
         # Inner settins_frm ------------------->
@@ -572,7 +580,7 @@ class FvFmFrame(ttk.Frame):
             self.res_img, self.res_cnt = self.d.extr_leaf(self.path)
             img = cv2.cvtColor(self.res_img, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(img)
-            self.output_frm.set(img)
+            self.output_frm.set_img(img)
             self.fvfm_list = self.f.get(self.path)
             self._set_list(self.fvfm_list)
         except (TypeError, ValueError) as e:
@@ -600,78 +608,211 @@ class FvFmFrame(ttk.Frame):
         if (self.path is not None) and (self.res_img is not None) and (self.res_cnt is not None) and (self.fvfm_list is not None):
             self.app.f2a()
 
+    def _new_line(self, event):
+        width = event.width
+        self.explain_txt.configure(wraplength=width)
+
 class ArrangeFrame(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, app):
         super().__init__(master)
+        self.app = app
+        self.a = Arrange()
+        self._set_var()
+        self._set_str()
         self._create_widgets()
+        self._set_style()
 
     def _set_str(self):
-        pass
+        self.explain_msg = (
+            'Align the inclination and size of the two leaves.'
+        )
 
     def _set_var(self):
         self.grn_img = None
         self.fvfm_img = None
+        self.grn_cnt = None
+        img = Image.open('src/arrow.png')
+        img = img.resize((48,48))
+        self.arrow_img = ImageTk.PhotoImage(img)
 
     def set_grn(self, grn_img, grn_cnt):
-        self.grn_img = grn_img
+        print('arrange set green')
+        self.in_grn_img = grn_img
         self.grn_cnt = grn_cnt
+        img = self._np2img(grn_img)
+        self.in_grn_frm.set_img(img)
+        self.in_grn_frm.set_txt('Detected image')        
 
     def set_fvfm(self, fvfm_img, fvfm_cnt):
-        self.fvfm_img = fvfm_img
+        self.infvfm_img = fvfm_img
         self.fvfm_cnt = fvfm_cnt
+        img = self._np2img(fvfm_img)
+        self.in_fvfm_frm.set_img(img)
+        self.in_fvfm_frm.set_txt('Detected image')
+        
+
+    def _np2img(self, np_img):
+        img = cv2.cvtColor(np_img, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(img)
+        return img
 
     def _set_style(self):
         style = ttk.Style()
         style.theme_use('classic')
-        style.configure('lbl.TLabel', font=('Calibri', 16))
+        style.configure('lbl.TLabel', font=('Calibri', 14))
+        style.configure('btn.TButton', font=('Calibri', 16))
 
     def _create_widgets(self):
         # <Widgets> -------------------------
-        img_frm = tk.Frame(self, bg='red')
+        img_frm = tk.Frame(self)
         grn_frm = self._green_frame(img_frm)
+        space_frm = tk.Frame(img_frm)
         fvfm_frm = self._fvfm_frame(img_frm)
         method_frm = self._method_frame()
         # </Widgets> ------------------------
         # <Configure> -----------------------
+        space_frm.configure(height=20)
         # </Configure> ----------------------
         # <Layouts> -------------------------
         img_frm.grid(column=0, row=0, sticky='NSEW')
-        grn_frm.pack()
-        fvfm_frm.pack()
+        grn_frm.pack(fill='both',expand=True)
+        space_frm.pack()
+        fvfm_frm.pack(fill='both',expand=True)
         method_frm.grid(column=1, row=0, sticky='NSEW')
-        self.grid_columnconfigure(0, weight=2)
+        self.grid_columnconfigure(0, weight=3)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
     def _green_frame(self, master):
         frm = ttk.Frame(master)
-        in_grn_frm = ImageFrame(frm)
+        in_grn_lbl = ttk.Label(frm)
+        out_grn_lbl = ttk.Label(frm)
+        self.in_grn_frm = ImageFrame(frm, out=True)
         arrow = ttk.Label(frm)
-        out_grn_frm = ImageFrame(frm, out=True)
-        in_grn_frm.grid(column=0, row=0, sticky='NSEW')
-        arrow.grid(column=1, row=0)
-        out_grn_frm.grid(column=2, row=0, sticky='NSEW')
+        self.out_grn_frm = ImageFrame(frm, out=True)
+    # <Configure> --------------------------
+        in_grn_lbl.configure(text='Input leaf image', style='lbl.TLabel')
+        out_grn_lbl.configure(text='Arranged leaf image', style='lbl.TLabel')
+        arrow.configure(image=self.arrow_img)
+    # </Configure> --------------------------
+    # <Layouts> -----------------------------
+        in_grn_lbl.grid(column=0, row=0)
+        out_grn_lbl.grid(column=2, row=0)
+        self.in_grn_frm.grid(column=0, row=1, sticky='NSEW')
+        arrow.grid(column=1, row=1)
+        self.out_grn_frm.grid(column=2, row=1, sticky='NSEW')
         frm.grid_columnconfigure(0, weight=1)
         frm.grid_columnconfigure(2, weight=1)
+        frm.grid_rowconfigure(1, weight=1)
         frm.grid_propagate(0)
         return frm
 
     def _fvfm_frame(self, master):
         frm = ttk.Frame(master)
-        in_fvfm_frm = ImageFrame(frm)
-        fvfm_arrow = ttk.Label(frm)
-        out_fvfm_frm = ImageFrame(frm, out=True)
+        in_lbl = ttk.Label(frm)
+        out_lbl = ttk.Label(frm)
+        self.in_fvfm_frm = ImageFrame(frm, out=True)
+        arrow = ttk.Label(frm)
+        self.out_fvfm_frm = ImageFrame(frm, out=True)
+        # <Configure> -----------------------
+        in_lbl.configure(text='Input fv/fm image', style='lbl.TLabel')
+        out_lbl.configure(text='Arranged fv/fm image', style='lbl.TLabel')
+        arrow.configure(image=self.arrow_img)
+        # <Layouts> -------------------------
+        in_lbl.grid(column=0, row=0)
+        out_lbl.grid(column=2, row=0)
+        self.in_fvfm_frm.grid(column=0, row=1, sticky='NSEW')
+        arrow.grid(column=1, row=1)
+        self.out_fvfm_frm.grid(column=2, row=1, sticky='NSEW')
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_columnconfigure(2, weight=1)
+        frm.rowconfigure(1, weight=1)
+        frm.grid_propagate(0)
         return frm
 
     def _method_frame(self):
+        # <Widgets> ----------------------
         frm = tk.Frame(self, bg='blue')
+        lbl = ttk.Label(frm)
+        self.explain_txt = ttk.Label(frm)
+        ex_img = tk.Frame(frm, width=200, height=400, bg='red')
+        btn_frm = ttk.Frame(frm)
+        run_btn = ttk.Button(btn_frm)
+        next_btn = ttk.Button(btn_frm)
+        # </Widgets> ---------------------------
+        # <Configure> ------------------------
+        frm.bind('<Configure>', self._new_line)
+        lbl.configure(text='Method', style='lbl.TLabel')
+        self.explain_txt.configure(text=self.explain_msg, style='lbl.TLabel')
+        run_btn.configure(text='RUN', style='btn.TButton', command=self._run)
+        next_btn.configure(text='NEXT', style='btn.TButton', command=self._next)
+        # </Configure> -----------------------
+        # <Layouts> --------------------------
+        lbl.grid(column=0, row=0)
+        self.explain_txt.grid(column=0, row=1)
+        ex_img.grid(column=0, row=2)
+        btn_frm.grid(column=0, row=3, sticky='EW')
+        run_btn.pack()
+        next_btn.pack(side='right')
+        frm.grid_columnconfigure(0, weight=1)
+        frm.grid_rowconfigure(2, weight=1)
+        frm.grid_propagate(0)
         return frm
+    
+    def _run(self):
+        try:
+            self.out_grn_img, self.out_fvfm_img = self.a.run(self.in_grn_img, self.infvfm_img, self.grn_cnt, self.fvfm_cnt)
+            grn_img = cv2.cvtColor(self.out_grn_img, cv2.COLOR_BGR2RGB)
+            grn_img = Image.fromarray(grn_img)
+            fvfm_img = cv2.cvtColor(self.out_fvfm_img, cv2.COLOR_BGR2RGB)
+            fvfm_img = Image.fromarray(fvfm_img)
+            self.out_grn_frm.set_img(grn_img)
+            self.out_fvfm_frm.set_img(fvfm_img)
+        except (ValueError) as e:
+            self.out_grn_frm.clear()
+            self.out_fvfm_frm.clear()
+            messagebox.showerror('Error', e)
+        self.app.res_arrange()
 
+    def _next(self):
+        if (self.out_grn_img is not None) and (self.out_fvfm_img is not None):
+            self.app.a2r()
+
+    def _new_line(self, event):
+        width = event.width
+        self.explain_txt.configure(wraplength=width)
+
+    def get(self):
+        return self.out_grn_img, self.out_fvfm_img
 
 class ResultFrame(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, app):
         super().__init__(master)
+        self.app = app
+        self.p = Pickcell()
+        self._set_str()
+        self._set_var()
+        self._set_style()
+        self._create_widgets()
 
+    def _set_var(self):
+        pass
+
+    def _set_str(self):
+        pass
+
+    def _set_style(self):
+        pass
+
+    def _create_widgets(self):
+        pass
+
+    def _input_frame(self):
+        pass
+
+    def _result_frame(self):
+        pass
+    
 
 # GUI module
 class ImageFrame(ttk.Frame):
@@ -687,6 +828,8 @@ class ImageFrame(ttk.Frame):
         self.ratio = 0
         lbl_frm.pack(fill='x')
         self.img_area.pack(fill='both', expand=True)
+        self.propagate(0)
+        self.text_var = tk.StringVar()
         if not out:
             self.img_area.drop_target_register(dnd2.DND_FILES)
             self.img_area.dnd_bind('<<Drop>>', self._drop)
@@ -695,7 +838,6 @@ class ImageFrame(ttk.Frame):
             btn = ttk.Button(lbl_frm, text='▼', command=self._select_img)
             lbl.pack(side='left',fill='both', expand=True)
             btn.pack(side='left', fill='y')
-        
 
     def _select_img(self):
         img_ext = ['*.bmp', '*.png', '*.PNG', '*.jpg', '*.JPG', '*.jpeg', '*.tiff']
@@ -727,6 +869,8 @@ class ImageFrame(ttk.Frame):
             new_height = new_width * self.ratio
         else:
             new_width = new_height * np.reciprocal(self.ratio)
+        if (int(new_width) <= 0) or (int(new_height) <= 0):
+            return
         self.img_resized = self.img.resize((int(new_width), int(new_height)))
         self.img_resized = ImageTk.PhotoImage(self.img_resized)
         self.img_area.configure(image=self.img_resized)
@@ -742,15 +886,19 @@ class ImageFrame(ttk.Frame):
     def get_path(self):
         return self.path
     
-    def set(self, img):
+    def set_txt(self, txt):
+        self.text_var.set(txt)
+    
+    def set_img(self, img):
+        print('set ImageFrame')
         self.img = img
         self.ratio = self.img.height / self.img.width
         frm_width = self.img_area.winfo_width()
         frm_height = self.img_area.winfo_height()
+        print(frm_width, frm_height)
         self._resize_img(frm_width, frm_height)
 
     def clear(self):
-        print('clear')
         self.img = None
         self.img_resized = None
 
@@ -808,7 +956,6 @@ class ScrollList(tk.Canvas):
 
     def _set_scrollregion(self, event):
         height = self.frame.winfo_height()
-        print(height)
         self.configure(scrollregion=(0,0,0,height))
 
 # GUI module

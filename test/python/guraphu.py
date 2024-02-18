@@ -1,8 +1,7 @@
-from matplotlib import pyplot as plt
-from pickcell import Pickcell
 import cv2
 import numpy as np
-
+from matplotlib import pyplot as plt
+from pickcell import Pickcell
 
 img1 = cv2.imread('test/output/daen/1_arranged.png')
 img2 = cv2.imread('test/output/daen/6_arranged.png')
@@ -14,11 +13,17 @@ try:
 except (TypeError, ValueError) as e:
     print(e)
 
-hue = np.array(hue)
-val = np.array(val)
+val2 = [[i,0,0] for i in val]
+a = np.stack([px, val2], 1)
+b = np.unique(a, axis=0)
+print(b[0,0])
 
-correlation = np.corrcoef(hue, val)
-print(correlation[0,1])
+#hue = np.array(hue)
+#val = np.array(val)
+
+#correlation = np.corrcoef(hue, val)
+#print(correlation[0])
+
 
 #plt.scatter(hue, val)
 #plt.show()
@@ -27,7 +32,11 @@ print(correlation[0,1])
 #g = [i[0] for i in px]
 #r = [i[0] for i in px]
 
-#fig = plt.figure()
-#ax = fig.add_subplot(255, 255, 255, projection='3d')
-#ax.scatter(r,g,b, c='b')
-#plt.show()
+bl = [i[0,0] for i in b]
+g = [i[0,1] for i in b]
+r = [i[0,2] for i in b]
+
+fig = plt.figure()
+ax = fig.add_subplot(255, 255, 255, projection='3d')
+ax.scatter(r,g,bl, c='b')
+plt.show()

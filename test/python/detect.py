@@ -206,7 +206,6 @@ class Detect:
         Returns:
             numpy.ndarray: Image of green only.
         """
-        print('detect', self.hsv_max, self.hsv_min)
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask_hsv = cv2.inRange(img_hsv, self.hsv_min, self.hsv_max)
         return mask_hsv
