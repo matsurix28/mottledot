@@ -816,7 +816,6 @@ class ResultFrame(ttk.Frame):
     def _result_frame(self):
         pass
     
-
 # GUI module
 class ImageFrame(ttk.Frame):
     def __init__(self, master, out=False):
