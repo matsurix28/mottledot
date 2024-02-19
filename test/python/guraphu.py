@@ -25,18 +25,18 @@ print(b[0,0])
 #print(correlation[0])
 
 
-#plt.scatter(hue, val)
-#plt.show()
+plt.scatter(hue, val)
+plt.show()
 
 #b = [i[0] for i in px]
 #g = [i[0] for i in px]
 #r = [i[0] for i in px]
 
-bl = [i[0,0] for i in b]
-g = [i[0,1] for i in b]
-r = [i[0,2] for i in b]
+#bl = [i[0,0] for i in b]
+#g = [i[0,1] for i in b]
+#r = [i[0,2] for i in b]
 
-fig = plt.figure()
-ax = fig.add_subplot(255, 255, 255, projection='3d')
-ax.scatter(r,g,bl, c='b')
-plt.show()
+#fig = plt.figure()
+#ax = fig.add_subplot(255, 255, 255, projection='3d')
+#ax.scatter(r,g,bl, c='b')
+#plt.show()

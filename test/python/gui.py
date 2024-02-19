@@ -35,7 +35,7 @@ class Application():
         self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
         self.arrange_frm = ArrangeFrame(self.root, self)
         self.main_frm.add_tab(self.arrange_frm, 'Arrange')
-        self.result_frm = ResultFrame(self.root)
+        self.result_frm = ResultFrame(self.root, self)
         self.main_frm.add_tab(self.result_frm, 'Result')
         self.root.mainloop()
 
@@ -111,7 +111,7 @@ class DetectFrame(ttk.Frame):
     def _image_frame(self):
         img_frm = ttk.Frame(self)
         self.input_frm = ImageFrame(img_frm)
-        img = Image.open('src/arrow.png')
+        img = Image.open('src/shita.png')
         img = img.resize((48,48))
         self.img = ImageTk.PhotoImage(img)
         space_frm = ttk.Frame(img_frm, height=30)
@@ -173,7 +173,7 @@ class DetectFrame(ttk.Frame):
         self.explain_cnt_lbl = ttk.Label(self.cnt_frm, padding=5, style='lbl.TLabel',text='Detects contours from an image. If it does not work well, adjust the threshold value. (Threshold range is 0-255)')
         #img = Image.open('src/cnts.png')
         #self.cnts_img = ImageTk.PhotoImage(img)
-        ex_img = tk.Frame(self.cnt_frm,  height=200, width=450, bg='red')
+        ex_img = tk.Frame(self.cnt_frm,  height=200, width=450, bg='black')
         setting_frm = tk.Frame(self.cnt_frm)
         thresh_lbl = ttk.Label(setting_frm, text='Threshold', style='lbl.TLabel')
         self.thresh_img = tk.Label(setting_frm)
@@ -205,7 +205,7 @@ class DetectFrame(ttk.Frame):
     def _green_method_frame(self, master):
         self.grn_frm = tk.Frame(master, relief='groove', borderwidth=5)
         self.explain_grn_lbl = ttk.Label(self.grn_frm, padding=5, style='lbl.TLabel', text='Extract the green range. Adjust the value to set the range of colors to be extracted. (Hue range is 0-180.)')
-        ex_img =tk.Frame(self.grn_frm, height=200, width=450, bg='blue')
+        ex_img =tk.Frame(self.grn_frm, height=200, width=450, bg='black')
         self.range_img = tk.Label(self.grn_frm)
         self._hue_bar()
         frm = tk.Frame(self.grn_frm, width=450, height=50)
@@ -416,7 +416,7 @@ class FvFmFrame(ttk.Frame):
         # </Widgets> ------------------------------
         # <Configure> -----------------------------
         # arrow
-        img = Image.open('src/arrow.png')
+        img = Image.open('src/shita.png')
         img = img.resize((48,48))
         self.arrow_img = ImageTk.PhotoImage(img)
         self.arrow.configure(
@@ -476,7 +476,7 @@ class FvFmFrame(ttk.Frame):
         frm = tk.Frame(self)
         title_lbl = ttk.Label(frm)
         self.explain_txt = ttk.Label(frm)
-        ex_img = tk.Frame(frm, width=400, height=200, bg='red')
+        ex_img = tk.Frame(frm, width=400, height=200, bg='black')
         settings_frm = ttk.Frame(frm)
         thresh_lbl = ttk.Label(settings_frm)
         self.thresh_img = tk.Label(settings_frm)
@@ -732,10 +732,10 @@ class ArrangeFrame(ttk.Frame):
 
     def _method_frame(self):
         # <Widgets> ----------------------
-        frm = tk.Frame(self, bg='blue')
+        frm = tk.Frame(self)
         lbl = ttk.Label(frm)
         self.explain_txt = ttk.Label(frm)
-        ex_img = tk.Frame(frm, width=200, height=400, bg='red')
+        ex_img = tk.Frame(frm, width=200, height=400, bg='black')
         btn_frm = ttk.Frame(frm)
         run_btn = ttk.Button(btn_frm)
         next_btn = ttk.Button(btn_frm)
@@ -802,7 +802,10 @@ class ResultFrame(ttk.Frame):
         pass
 
     def _set_style(self):
-        pass
+        style = ttk.Style()
+        style.theme_use('classic')
+        style.configure('lbl.TLabel', font=('Calibri', 14))
+        style.configure('btn.TButton', font=('Calibri', 16))
 
     def _create_widgets(self):
         pass
