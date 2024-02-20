@@ -13,4 +13,5 @@ RUN pip install \
     easyocr \
     matplotlib \
     tkinterdnd2 \
-    isort
+    isort \
+    tkhtmlview
