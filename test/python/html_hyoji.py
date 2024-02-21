@@ -11,7 +11,7 @@ root.geometry('800x500')
 #html_label.pack()
 
 frame = HtmlFrame(root)
-frame.load_file('/workspace/fvfm.html')
+frame.load_file('/workspace/fvfm.html', decode='utf-8', force=True)
 frame.pack()
 
 root.mainloop()
