@@ -14,4 +14,5 @@ RUN pip install \
     matplotlib \
     tkinterdnd2 \
     isort \
-    tkhtmlview
+    tkhtmlview \
+    plotly

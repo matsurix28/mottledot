@@ -12,6 +12,9 @@ class Graph():
         gti_list = np.stack([px, val_list, hue_list], 1)
         uniq_list = np.unique(gti_list, axis=0)
         return uniq_list
+
+    def _than_min_area(self):
+        pass
     
     def _get_scatter_value(self,uniq_px_list):
         blue = [i[0,0] for i in uniq_px_list]
@@ -35,4 +38,5 @@ class Graph():
         )
         return fig
     
-    def draw_histogram(self,)
+    def draw_histogram(self):
+        pass

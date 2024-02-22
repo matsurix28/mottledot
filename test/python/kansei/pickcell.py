@@ -48,30 +48,31 @@ class Pickcell:
             result = p.map(self.pick_wrap, px_list)
         res_px = []
         res_fvfm = []
-        res_hue = []
+        #res_hue = []
         for i in range(len(result)):
             res_px.extend(result[i][0])
             res_fvfm.extend(result[i][1])
-            res_hue.extend(result[i][2])
-        return res_px, res_hue, res_fvfm
+            #res_hue.extend(result[i][2])
+        return res_px, res_fvfm
 
-    def __pick(self, img_leaf, img_fvfm, img_hue):
-        #result = []
-        px = []
-        fvfm = []
-        hue = []
+    def __pick(self, img_leaf, img_fvfm):
+        result = []
+        #px = []
+        #fvfm = []
+        #hue = []
         length = img_leaf.shape[0]
         for i in range(length):
             if not ((img_leaf[i].sum() <= 50) or (img_fvfm[i].sum() == 0)):
                 idx = np.abs(self.color - img_fvfm[i]).sum(axis=1).argmin()
-                px.append(img_leaf[i])
-                hue.append(img_hue[i])
-                fvfm.append(self.value[idx])
-        return px, fvfm, hue
+                result.append([img_leaf[i], self.value[idx]])
+                #px.append(img_leaf[i])
+                #hue.append(img_hue[i])
+                #fvfm.append(self.value[idx])
+        return result
     
     def pick_wrap(self, args):
-        px, fvfm, hue = self.__pick(*args)
-        return px, fvfm, hue
+        result = self.__pick(*args)
+        return result
     
     def __input(self, input):
         if type(input) == str:
