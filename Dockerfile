@@ -6,7 +6,7 @@ RUN apt-get update && \
     libglib2.0-0 \
     git \
     tk-dev \
-    libsm6
+    libsm6 
 
 RUN pip install \
     opencv-python \

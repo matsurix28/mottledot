@@ -1,12 +1,14 @@
 #!/usr/bin/env python3.11
 # -*- coding: utf-8 -*-
 
-import cv2
-import numpy as np
 import argparse
 import os
-from multiprocessing import Pool
 import time
+from multiprocessing import Pool
+
+import cv2
+import numpy as np
+
 
 def main():
     p = Pickcell()
@@ -57,22 +59,22 @@ class Pickcell:
 
     def __pick(self, img_leaf, img_fvfm):
         result = []
-        #px = []
-        #fvfm = []
+        px = []
+        fvfm = []
         #hue = []
         length = img_leaf.shape[0]
         for i in range(length):
             if not ((img_leaf[i].sum() <= 50) or (img_fvfm[i].sum() == 0)):
                 idx = np.abs(self.color - img_fvfm[i]).sum(axis=1).argmin()
-                result.append([img_leaf[i], self.value[idx]])
-                #px.append(img_leaf[i])
+                #result.append([img_leaf[i], self.value[idx]])
+                px.append(img_leaf[i])
                 #hue.append(img_hue[i])
-                #fvfm.append(self.value[idx])
-        return result
+                fvfm.append(self.value[idx])
+        return px,fvfm
     
     def pick_wrap(self, args):
-        result = self.__pick(*args)
-        return result
+        px, fvfm = self.__pick(*args)
+        return px, fvfm
     
     def __input(self, input):
         if type(input) == str:

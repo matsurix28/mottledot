@@ -1,9 +1,14 @@
+import glob
+import tempfile
+
 import cv2
 import numpy as np
 from matplotlib import colors
 from matplotlib import pyplot as plt
 from pickcell import Pickcell
+from PIL import Image
 from plotly import graph_objects as go
+from plotly_resampler import register_plotly_resampler
 
 img1 = cv2.imread('0220/1_arranged.png')
 img2 = cv2.imread('0220/2_arranged.png')
@@ -79,6 +84,8 @@ if vvv  is not None:
     marker.update(color=array_px)
     #marker['colorbar'] = {'title': 'Fv/Fm'}
 
+register_plotly_resampler(mode='auto')
+
 figure = go.Figure(
     data=[go.Scatter3d(
         x=r,
@@ -98,4 +105,34 @@ figure = go.Figure(
 
 # 表示
 #figure.write_html('fvfm.html')
-figure.show()
+#figure.show()
+figure.show_dash(mode='inline')
+
+def rotate(x,y,z,theta):
+    w = x + 1j *y
+    return np.real(np.exp(1j * theta) * w), np.imag(np.exp(1j * theta) * w), z
+
+x_eye = -1.25
+y_eye = 2
+z_eye = 0.5
+
+'''
+with tempfile.TemporaryDirectory(prefix='temp_', dir='.') as temp:
+    angels = np.arange(0, 2 * np.pi, 0.1)
+    for i, theta in enumerate(angels):
+        print(i)
+        no = str(i).zfill(3)
+        x_r, y_r, z_r = rotate(x_eye, y_eye, z_eye, -theta)
+        figure.update_layout(scene_camera_eye=dict(
+            x=x_r,
+            y=y_r,
+            z=z_r
+        ))
+        print('save ', i)
+        figure.write_image(temp + '/' + no + '.png', scale=1)
+        print('save finished ', i)
+
+    files = sorted(glob.glob(temp + '/*.png'))
+    images = list(map(lambda file: Image.open(file), files))
+    images[0].save('res.gif', save_all=True, append_images=images[1:], duration=500, loop=0)
+'''
