@@ -1,11 +1,11 @@
 import glob
 import tempfile
+from test.python.ppp import Pickcell
 
 import cv2
 import numpy as np
 from matplotlib import colors
 from matplotlib import pyplot as plt
-from pickcell import Pickcell
 from PIL import Image
 from plotly import graph_objects as go
 from plotly_resampler import register_plotly_resampler
@@ -84,7 +84,7 @@ if vvv  is not None:
     marker.update(color=array_px)
     #marker['colorbar'] = {'title': 'Fv/Fm'}
 
-register_plotly_resampler(mode='auto')
+#register_plotly_resampler(mode='auto')
 
 figure = go.Figure(
     data=[go.Scatter3d(
@@ -105,8 +105,8 @@ figure = go.Figure(
 
 # 表示
 #figure.write_html('fvfm.html')
-#figure.show()
-figure.show_dash(mode='inline')
+figure.show()
+#figure.show_dash(mode='inline')
 
 def rotate(x,y,z,theta):
     w = x + 1j *y

@@ -7,8 +7,10 @@ import tkinterdnd2 as dnd2
 from arrange import Arrange
 from detect import Detect
 from fvfm import Fvfm
+from graph import Graph
 from pickcell import Pickcell
 from PIL import Image, ImageTk
+from result import show_sctter3d
 
 
 def main():
@@ -22,6 +24,8 @@ class Application():
         self.root.wm_minsize(1080, 700)
         self.root.title('Pickcell Color')
         self.main_frm = MainFrame(self.root)
+        self.p = Pickcell()
+        self.g = Graph()
 
     def _set_vars(self):
         self.grn_path = None
@@ -62,6 +66,18 @@ class Application():
     def res_arrange(self):
         self.arr_grn_img, self.arr_fvfm_img = self.arrange_frm.get()
         self.result_frm.set_imgs(self.arr_grn_img, self.arr_fvfm_img)
+
+    def click_analysis(self):
+        print('analysis!')
+        print('get')
+        self.arr_grn_img, self.arr_fvfm_img = self.arrange_frm.get()
+        print('pick')
+        self.res_px, self.res_fvfm = self.p.run(self.arr_grn_img, self.arr_fvfm_img, self.fvfm_list)
+        print('draw')
+        self.fig_leaf, self.fig_fvfm, self.fig_hue = self.g.draw(self.res_px, self.res_fvfm)
+        print('show')
+        show_sctter3d(self.fig_leaf, self.fig_fvfm, self.fig_hue)
+
 
 class MainFrame(ttk.Frame):
     def __init__(self, master):
@@ -776,7 +792,7 @@ class ArrangeFrame(ttk.Frame):
 
     def _next(self):
         if (self.out_grn_img is not None) and (self.out_fvfm_img is not None):
-            self.app.a2r()
+            self.app.click_analysis()
 
     def _new_line(self, event):
         width = event.width
@@ -810,11 +826,9 @@ class ResultFrame(ttk.Frame):
     def _create_widgets(self):
         pass
 
-    def _input_frame(self):
+    def _scatter2d_frame(self):
         pass
-
-    def _result_frame(self):
-        pass
+    
     
 # GUI module
 class ImageFrame(ttk.Frame):

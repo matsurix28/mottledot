@@ -3,7 +3,6 @@
 
 import argparse
 import os
-import time
 from multiprocessing import Pool
 
 import cv2
@@ -37,31 +36,25 @@ class Pickcell:
             raise
         if img_leaf.shape != img_fvfm.shape:
             raise ValueError('Size differs in the two images.')
-        img_hue = self.__reshape_hue(img_leaf)
         img_leaf = self.__reshape_bgr(img_leaf)
         img_fvfm = self.__reshape_bgr(img_fvfm)
         img_leaf = np.array_split(img_leaf, self.num_cpu, axis=0)
-        img_fvfm = np.array_split(img_fvfm, self.num_cpu, axis=0)
-        img_hue = np.array_split(img_hue, self.num_cpu, axis=0) 
+        img_fvfm = np.array_split(img_fvfm, self.num_cpu, axis=0) 
         px_list = []
         for i in range(self.num_cpu):
-            px_list.append([img_leaf[i], img_fvfm[i], img_hue[i]])
+            px_list.append([img_leaf[i], img_fvfm[i]])
         with Pool(self.num_cpu) as p:
             result = p.map(self.pick_wrap, px_list)
         res_px = []
         res_fvfm = []
-        #res_hue = []
         for i in range(len(result)):
             res_px.extend(result[i][0])
             res_fvfm.extend(result[i][1])
-            #res_hue.extend(result[i][2])
         return res_px, res_fvfm
 
     def __pick(self, img_leaf, img_fvfm):
-        result = []
         px = []
         fvfm = []
-        #hue = []
         length = img_leaf.shape[0]
         for i in range(length):
             if not ((img_leaf[i].sum() <= 50) or (img_fvfm[i].sum() == 0)):
