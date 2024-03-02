@@ -1,0 +1,36 @@
+<MainWidget>:
+    orientation: 'vertical'
+    padding: [20, 20]
+    Label:
+        text: "File Dialog"
+        size_hint: 1.0, 0.3
+        font_size: 30
+    Button:
+        text: 'open popup'
+        on_release: root.load_dialog()
+        size_hint: 1.0, 0.15
+        font_size: 25
+    Label:
+        id: label1
+        text: "empty path"
+        size_hint: 1.0, 0.50
+    Image:
+        id: input_img
+        source: ''
+
+<CustomPopup>:
+    size: root.size
+    pos: root.pos
+    orientation: "vertical"
+    FileChooserIconView:
+        id: filechooser
+        path: './'
+    BoxLayout:
+        size_hint_y: None
+        height: 30
+        Button:
+            text: "Cancel"
+            on_release: root.cancel()
+        Button:
+            text: "Load"
+            on_release: root.load(filechooser.selection)
