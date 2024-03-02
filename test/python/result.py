@@ -9,7 +9,7 @@ def show_sctter3d(fig1, fig2, fig3):
             [{'type': 'scene'}, {'type': 'scene'}, {'type': 'xy'}]
         ]
     )
-    fig.add_trace(fig1, row=1, col=1)
-    fig.add_trace(fig2, row=1, col=2)
-    fig.add_trace(fig3, row=1, col=3)
+    fig.add_traces(fig1.data[0], rows=1, cols=1)
+    fig.add_traces(fig2.data[0], rows=1, cols=2)
+    fig.add_traces(fig3.data[0], rows=1, cols=3)
     fig.show()

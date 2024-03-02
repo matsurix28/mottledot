@@ -11,4 +11,6 @@ min = 0
 for p,v in zip(px, val):
     px.count(p[0])
 
-np.count_nonzero(px == [24,34,56], axis=0)
+np.count_nonzero(px == px[0], axis=0)
+
+np.sum(px == [24,34,56], axis=0)

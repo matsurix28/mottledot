@@ -39,7 +39,7 @@ class Application():
         self.main_frm.add_tab(self.fvfm_frm, 'Fv/Fm value')
         self.arrange_frm = ArrangeFrame(self.root, self)
         self.main_frm.add_tab(self.arrange_frm, 'Arrange')
-        self.result_frm = ResultFrame(self.root, self)
+        self.result_frm = AnalysisFrame(self.root, self)
         self.main_frm.add_tab(self.result_frm, 'Result')
         self.root.mainloop()
 
@@ -801,7 +801,7 @@ class ArrangeFrame(ttk.Frame):
     def get(self):
         return self.out_grn_img, self.out_fvfm_img
 
-class ResultFrame(ttk.Frame):
+class AnalysisFrame(ttk.Frame):
     def __init__(self, master, app):
         super().__init__(master)
         self.app = app
@@ -824,15 +824,23 @@ class ResultFrame(ttk.Frame):
         style.configure('btn.TButton', font=('Calibri', 16))
 
     def _create_widgets(self):
-        pass
+        color1_frm = self.color1_frame(self)
+        color2_frm = self.color1_frame(self)
 
-    def _scatter2d_frame(self):
-        pass
+    def color_frame(self, master):
+        # <Widgets> -------------------
+        frm = ttk.Frame(master)
+        img_frm = ImageFrame(frm, no_space=True)
+        setting_fram = ttk.Frame
+        return frm
     
+    def method_frame(self, master):
+        frm = ttk.Frame(master)
+        return frm
     
 # GUI module
 class ImageFrame(ttk.Frame):
-    def __init__(self, master, out=False):
+    def __init__(self, master, out=False, no_space=False):
         super().__init__(master)
         self.path = ''
         self.img = None
@@ -842,7 +850,8 @@ class ImageFrame(ttk.Frame):
         self.img_area.propagate(0)
         self.img_area.bind('<Configure>', self._transform_frm)
         self.ratio = 0
-        lbl_frm.pack(fill='x')
+        if not no_space:
+            lbl_frm.pack(fill='x')
         self.img_area.pack(fill='both', expand=True)
         self.propagate(0)
         self.text_var = tk.StringVar()
@@ -917,6 +926,13 @@ class ImageFrame(ttk.Frame):
     def clear(self):
         self.img = None
         self.img_resized = None
+
+# GUI module
+class ColorExtrFrame(ttk.Frame):
+    def __init(self,master):
+        super().__init__(master)
+
+    def 
 
 # GUI module
 class ScrollList(tk.Canvas):
