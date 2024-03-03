@@ -1,36 +1,23 @@
-<MainWidget>:
-    orientation: 'vertical'
-    padding: [20, 20]
-    Label:
-        text: "File Dialog"
-        size_hint: 1.0, 0.3
-        font_size: 30
-    Button:
-        text: 'open popup'
-        on_release: root.load_dialog()
-        size_hint: 1.0, 0.15
-        font_size: 25
-    Label:
-        id: label1
-        text: "empty path"
-        size_hint: 1.0, 0.50
-    Image:
-        id: input_img
-        source: ''
-
-<CustomPopup>:
-    size: root.size
-    pos: root.pos
-    orientation: "vertical"
-    FileChooserIconView:
-        id: filechooser
-        path: './'
+<FileSelect>:
+    image1:image1
+    image2:image2
+    label1:label1
     BoxLayout:
-        size_hint_y: None
-        height: 30
+        orientation: 'vertical'
+        Image:
+            id: image1
+            source: ''
+        Label:
+            id: label1
+            text: 'Extract leaf'
+            size_hint_y: 0.1
+        Image:
+            id: image2
         Button:
-            text: "Cancel"
-            on_release: root.cancel()
+            text: 'Select image'
+            size_hint_y: 0.1
+            on_press: root.open_file_dialog()
         Button:
-            text: "Load"
-            on_release: root.load(filechooser.selection)
+            text: 'Run'
+            size_hint_y: 0.1
+            on_press: root.run()

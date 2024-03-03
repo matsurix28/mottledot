@@ -7,7 +7,7 @@ title = My Application
 package.name = myapp
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.test
+package.domain = io.github.matsurix28.pickkcell
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy
+requirements = python3,kivy,android,opencv,opencv_extras,numpy,detect
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -101,10 +101,10 @@ fullscreen = 0
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 31
+#android.api = 34
 
 # (int) Minimum API your APK / AAB will support.
-#android.minapi = 21
+#android.minapi = 31
 
 # (int) Android SDK version to use
 #android.sdk = 20
@@ -113,7 +113,7 @@ fullscreen = 0
 #android.ndk = 23b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
-#android.ndk_api = 21
+#android.ndk_api = 31
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 #android.private_storage = True
